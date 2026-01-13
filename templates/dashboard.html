@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - FinHabits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">💰 FinHabits</a>
+        <ul class="navbar-nav">
+            <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+            <li><a href="/calendar" class="nav-link">Calendar</a></li>
+            <li><a href="/insights" class="nav-link">AI Insights</a></li>
+            <li><span class="nav-link">👤 {{ username }}</span></li>
+            <li><a href="/logout" class="nav-link">Logout</a></li>
+            <li><button id="themeToggle" class="theme-toggle">🌙</button></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1>Welcome, {{ username }}! 👋</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 2rem;">
+            Track your finances and habits to build a better future
+        </p>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-3 mb-4">
+            <div class="stat-card" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <div class="stat-value" id="todaySpending">₹0.00</div>
+                <div class="stat-label">Today's Spending</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <div class="stat-value" id="monthSpending">₹0.00</div>
+                <div class="stat-label">This Month's Spending</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <div class="stat-value" id="habitsCompleted">0</div>
+                <div class="stat-label">Habits Completed Today</div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Expense Tracker -->
+            <div class="card">
+                <h3 class="card-title">💸 Track Expense</h3>
+                <form id="expenseForm">
+                    <div class="form-group">
+                        <label class="form-label">Amount (₹)</label>
+                        <input type="number" id="expenseAmount" class="form-input" step="0.01" min="0" required
+                            placeholder="100.00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select id="expenseCategory" class="form-select" required>
+                            <option value="food">Food</option>
+                            <option value="transport">Transport</option>
+                            <option value="education">Education</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="others">Others</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" id="expenseDescription" class="form-input" placeholder="Lunch at cafe">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" id="expenseDate" class="form-input" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Add Expense</button>
+                </form>
+
+                <div style="margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Today's Expenses</h4>
+                    <div id="expensesList"></div>
+                </div>
+            </div>
+
+            <!-- Income Tracker -->
+            <div class="card">
+                <h3 class="card-title">💵 Track Income</h3>
+                <form id="incomeForm">
+                    <div class="form-group">
+                        <label class="form-label">Amount (₹)</label>
+                        <input type="number" id="incomeAmount" class="form-input" step="0.01" min="0" required
+                            placeholder="1000.00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Source</label>
+                        <input type="text" id="incomeSource" class="form-input" required
+                            placeholder="Part-time job, Allowance, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" id="incomeDate" class="form-input" required>
+                    </div>
+                    <button type="submit" class="btn btn-success" style="width: 100%;">Add Income</button>
+                </form>
+
+                <div style="margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Today's Income</h4>
+                    <div id="incomeList"></div>
+                </div>
+            </div>
+
+            <!-- Habit Tracker -->
+            <div class="card">
+                <h3 class="card-title">✅ Track Habits</h3>
+                <p class="card-text">Mark your daily habits as complete</p>
+
+                <div id="habitsList" style="margin-bottom: 1rem;"></div>
+
+                <button id="addHabitBtn" class="btn btn-secondary" style="width: 100%;">+ Add Custom Habit</button>
+
+                <div style="margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">🔥 Your Streaks</h4>
+                    <div id="streaksList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-2 mt-4">
+            <a href="/calendar" class="card" style="text-decoration: none; text-align: center;">
+                <div style="font-size: 3rem;">📅</div>
+                <h3 class="card-title">View Calendar</h3>
+                <p class="card-text">See your financial journey month by month</p>
+            </a>
+            <a href="/insights" class="card" style="text-decoration: none; text-align: center;">
+                <div style="font-size: 3rem;">🤖</div>
+                <h3 class="card-title">AI Insights</h3>
+                <p class="card-text">Get personalized financial advice and summaries</p>
+            </a>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+
+</html>

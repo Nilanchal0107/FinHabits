@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - FinHabits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">💰 FinHabits</a>
+        <ul class="navbar-nav">
+            <li><a href="/signup" class="nav-link">Sign Up</a></li>
+            <li><button id="themeToggle" class="theme-toggle">🌙</button></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div style="max-width: 500px; margin: 4rem auto;">
+            <div class="card">
+                <h2 class="text-center mb-3">Welcome Back!</h2>
+                <p class="text-center text-secondary mb-4">Login to continue tracking your habits and spending</p>
+
+                <div id="alertContainer"></div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input type="email" id="email" class="form-input" required placeholder="your.email@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" class="form-input" required
+                            placeholder="Enter your password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+                </form>
+
+                <p class="text-center mt-3" style="color: var(--text-secondary);">
+                    Don't have an account? <a href="/signup"
+                        style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">Sign up here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = '';
+
+            try {
+                const result = await apiCall('/login', 'POST', { email, password });
+
+                if (result.success) {
+                    alertContainer.innerHTML = '<div class="alert alert-success">Login successful! Redirecting...</div>';
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                } else {
+                    alertContainer.innerHTML = `<div class="alert alert-error">${result.message}</div>`;
+                }
+            } catch (error) {
+                alertContainer.innerHTML = '<div class="alert alert-error">Login failed. Please try again.</div>';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Insights - FinHabits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">💰 FinHabits</a>
+        <ul class="navbar-nav">
+            <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+            <li><a href="/calendar" class="nav-link">Calendar</a></li>
+            <li><a href="/insights" class="nav-link">AI Insights</a></li>
+            <li><span class="nav-link">👤 {{ username }}</span></li>
+            <li><a href="/logout" class="nav-link">Logout</a></li>
+            <li><button id="themeToggle" class="theme-toggle">🌙</button></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1>🤖 AI-Powered Financial Insights</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 2rem;">
+            Get personalized advice and deep insights into your spending patterns
+        </p>
+
+        <!-- Month Navigation -->
+        <div class="card mb-4">
+            <div class="calendar-header">
+                <button id="prevInsightsMonth" class="btn btn-secondary">← Previous Month</button>
+                <h2 id="insightsMonth" style="margin: 0;">Loading...</h2>
+                <button id="nextInsightsMonth" class="btn btn-secondary">Next Month →</button>
+            </div>
+        </div>
+
+        <!-- Insights Container -->
+        <div id="insightsContainer">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="card mt-4" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));">
+            <h3>ℹ️ How AI Insights Work</h3>
+            <p style="color: var(--text-secondary); line-height: 1.8;">
+                Our AI advisor analyzes your spending patterns, income, and habit completion data to provide:
+            </p>
+            <ul style="color: var(--text-secondary); line-height: 2;">
+                <li><strong>Monthly Summary:</strong> A natural language overview of your financial health</li>
+                <li><strong>Comparison:</strong> How this month compares to previous months</li>
+                <li><strong>Category Analysis:</strong> Breakdown of where your money goes</li>
+                <li><strong>Personalized Suggestions:</strong> Actionable tips to improve your finances</li>
+                <li><strong>Habit Correlation:</strong> Connections between your habits and spending</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/insights.js') }}"></script>
+</body>
+
+</html>

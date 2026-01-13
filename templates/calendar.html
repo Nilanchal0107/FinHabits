@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar - FinHabits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">💰 FinHabits</a>
+        <ul class="navbar-nav">
+            <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+            <li><a href="/calendar" class="nav-link">Calendar</a></li>
+            <li><a href="/insights" class="nav-link">AI Insights</a></li>
+            <li><span class="nav-link">👤 {{ username }}</span></li>
+            <li><a href="/logout" class="nav-link">Logout</a></li>
+            <li><button id="themeToggle" class="theme-toggle">🌙</button></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1>📅 Monthly Calendar</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 2rem;">
+            View your financial journey and habit tracking at a glance
+        </p>
+
+        <div class="calendar">
+            <div class="calendar-header">
+                <button id="prevMonth" class="btn btn-secondary">← Previous</button>
+                <h2 id="currentMonth" style="margin: 0;">Loading...</h2>
+                <button id="nextMonth" class="btn btn-secondary">Next →</button>
+            </div>
+
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Calendar will be rendered here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Day Details Panel -->
+        <div id="dayDetails" class="card mt-4" style="display: none;">
+            <!-- Details will be shown here -->
+        </div>
+
+        <div class="card mt-4">
+            <h3>📊 Legend</h3>
+            <div class="grid grid-2" style="margin-top: 1rem;">
+                <div class="list-item">
+                    <span>Red numbers:</span>
+                    <span style="color: var(--danger); font-weight: 700;">Daily expenses</span>
+                </div>
+                <div class="list-item">
+                    <span>Green checkmarks:</span>
+                    <span style="color: var(--success); font-weight: 700;">Habits completed</span>
+                </div>
+                <div class="list-item">
+                    <span>Blue border:</span>
+                    <span style="color: var(--accent-primary); font-weight: 700;">Today's date</span>
+                </div>
+                <div class="list-item">
+                    <span>Click any day:</span>
+                    <span style="font-weight: 600;">View detailed breakdown</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+</body>
+
+</html>

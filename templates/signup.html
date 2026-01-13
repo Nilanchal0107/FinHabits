@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - FinHabits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">💰 FinHabits</a>
+        <ul class="navbar-nav">
+            <li><a href="/login" class="nav-link">Login</a></li>
+            <li><button id="themeToggle" class="theme-toggle">🌙</button></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div style="max-width: 500px; margin: 4rem auto;">
+            <div class="card">
+                <h2 class="text-center mb-3">Create Your Account</h2>
+                <p class="text-center text-secondary mb-4">Start your journey to better financial habits</p>
+
+                <div id="alertContainer"></div>
+
+                <form id="signupForm">
+                    <div class="form-group">
+                        <label class="form-label" for="username">Username</label>
+                        <input type="text" id="username" class="form-input" required placeholder="Choose a username">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input type="email" id="email" class="form-input" required placeholder="your.email@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" class="form-input" required
+                            placeholder="Create a strong password" minlength="6">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="form-input" required
+                            placeholder="Re-enter your password" minlength="6">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+                </form>
+
+                <p class="text-center mt-3" style="color: var(--text-secondary);">
+                    Already have an account? <a href="/login"
+                        style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">Login here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = '';
+
+            // Validate password match
+            if (password !== confirmPassword) {
+                alertContainer.innerHTML = '<div class="alert alert-error">Passwords do not match!</div>';
+                return;
+            }
+
+            if (password.length < 6) {
+                alertContainer.innerHTML = '<div class="alert alert-error">Password must be at least 6 characters long!</div>';
+                return;
+            }
+
+            try {
+                const result = await apiCall('/signup', 'POST', { username, email, password });
+
+                if (result.success) {
+                    alertContainer.innerHTML = '<div class="alert alert-success">Account created! Redirecting to login...</div>';
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 1500);
+                } else {
+                    alertContainer.innerHTML = `<div class="alert alert-error">${result.message}</div>`;
+                }
+            } catch (error) {
+                alertContainer.innerHTML = '<div class="alert alert-error">Signup failed. Email might already be in use.</div>';
+            }
+        });
+    </script>
+</body>
+
+</html>

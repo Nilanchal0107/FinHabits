@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinHabits - Connect Your Habits with Your Spending</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">💰 FinHabits</a>
+        <ul class="navbar-nav">
+            <li><button id="themeToggle" class="theme-toggle">🌙</button></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1>FinHabits</h1>
+            <p class="hero-subtitle">
+                <strong>Your habits shape your spending. Understand the connection.</strong>
+            </p>
+            
+            <div style="max-width: 800px; margin: 2rem auto; text-align: left;">
+                <div class="card mb-3">
+                    <h3>📊 What is FinHabits?</h3>
+                    <p class="card-text">
+                        FinHabits is a beginner-friendly web application designed for students and first-time budget trackers. 
+                        Unlike traditional expense trackers, FinHabits connects your daily habits with your spending patterns 
+                        to help you make smarter financial decisions.
+                    </p>
+                </div>
+
+                <div class="card mb-3">
+                    <h3>✨ Why FinHabits is Unique</h3>
+                    <p class="card-text">
+                        Most apps only show you <em>what</em> you spend. FinHabits shows you <em>why</em>. 
+                        By tracking both your expenses and daily habits (study, exercise, coding, etc.), 
+                        we help you discover how your lifestyle choices influence your financial behavior.
+                    </p>
+                </div>
+
+                <div class="card mb-3">
+                    <h3>🎯 Key Objectives</h3>
+                    <ul style="color: var(--text-secondary); line-height: 2;">
+                        <li>📝 Track daily expenses across multiple categories</li>
+                        <li>💵 Monitor income sources</li>
+                        <li>✅ Log daily habits and maintain streaks</li>
+                        <li>📅 Visualize your financial journey on a custom calendar</li>
+                        <li>🤖 Get AI-powered insights and personalized suggestions</li>
+                        <li>🏆 Stay motivated with achievement tracking</li>
+                    </ul>
+                </div>
+
+                <div class="card" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover)); color: white; border: none;">
+                    <h3 style="color: white;">💡 One-Line Description</h3>
+                    <p style="font-size: 1.25rem; font-weight: 600; margin: 0; opacity: 0.95;">
+                        "Track your money, build better habits, and discover the connection between them."
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-center gap-2 mt-4">
+                <a href="/signup" class="btn btn-primary">Get Started - Sign Up</a>
+                <a href="/login" class="btn btn-secondary">Already have an account? Login</a>
+            </div>
+        </div>
+
+        <div class="grid grid-3 mt-4">
+            <div class="card">
+                <div style="font-size: 3rem; text-align: center;">📊</div>
+                <h3 class="card-title text-center">Expense Tracking</h3>
+                <p class="card-text text-center">
+                    Categorize and track every rupee you spend across food, transport, education, entertainment, and more.
+                </p>
+            </div>
+
+            <div class="card">
+                <div style="font-size: 3rem; text-align: center;">✅</div>
+                <h3 class="card-title text-center">Habit Tracking</h3>
+                <p class="card-text text-center">
+                    Mark your daily habits as complete and build streaks. See how consistency impacts your spending.
+                </p>
+            </div>
+
+            <div class="card">
+                <div style="font-size: 3rem; text-align: center;">🤖</div>
+                <h3 class="card-title text-center">AI Insights</h3>
+                <p class="card-text text-center">
+                    Get monthly summaries, comparisons, and personalized suggestions from our AI financial advisor.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
