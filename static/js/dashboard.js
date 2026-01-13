@@ -2,18 +2,34 @@
 
 let currentDate = new Date();
 
+// Helper function to get today's date in YYYY-MM-DD format
+function getTodayDateString() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // Load dashboard data on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadTodayStats();
     loadTodayExpenses();
     loadTodayIncome();
+    loadTodaySavings();
     loadHabits();
     loadStreaks();
 
-    // Set today's date in inputs
-    const today = formatDate(currentDate);
+    // Set today's date in inputs - using reliable method
+    const today = getTodayDateString();
     document.getElementById('expenseDate').value = today;
     document.getElementById('incomeDate').value = today;
+    document.getElementById('savingsDate').value = today;
+
+    // Set max date to today to prevent future dates
+    document.getElementById('expenseDate').max = today;
+    document.getElementById('incomeDate').max = today;
+    document.getElementById('savingsDate').max = today;
 });
 
 // Load today's stats
@@ -23,6 +39,7 @@ async function loadTodayStats() {
 
         document.getElementById('todaySpending').textContent = formatCurrency(stats.today_spending);
         document.getElementById('monthSpending').textContent = formatCurrency(stats.month_spending);
+        document.getElementById('monthSavings').textContent = formatCurrency(stats.month_savings || 0);
         document.getElementById('habitsCompleted').textContent = stats.habits_completed_today;
     } catch (error) {
         console.error('Error loading stats:', error);
@@ -43,14 +60,20 @@ async function loadTodayExpenses() {
         }
 
         container.innerHTML = expenses.map(expense => `
-            <div class="list-item">
-                <div>
+            <div class="list-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                <div style="flex: 1;">
                     <strong>${expense.description || 'Expense'}</strong>
                     <span class="category-badge category-${expense.category.toLowerCase()}">${expense.category}</span>
                     <br>
                     <small style="color: var(--text-secondary);">${expense.date}</small>
                 </div>
-                <div style="font-weight: 700; font-size: 1.1rem;">${formatCurrency(expense.amount)}</div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="font-weight: 700; font-size: 1.1rem;">${formatCurrency(expense.amount)}</div>
+                    <button onclick="editExpense(${expense.id}, '${expense.description}', '${expense.category}', ${expense.amount}, '${expense.date}')" 
+                            class="btn-icon" title="Edit" style="padding: 0.25rem 0.5rem; font-size: 0.9rem;">✏️</button>
+                    <button onclick="deleteExpense(${expense.id})" 
+                            class="btn-icon" title="Delete" style="padding: 0.25rem 0.5rem; font-size: 0.9rem;">🗑️</button>
+                </div>
             </div>
         `).join('');
     } catch (error) {
@@ -100,7 +123,7 @@ document.getElementById('expenseForm')?.addEventListener('submit', async (e) => 
 
         // Reset form
         e.target.reset();
-        document.getElementById('expenseDate').value = formatDate(currentDate);
+        document.getElementById('expenseDate').value = getTodayDateString();
 
         // Reload data
         loadTodayExpenses();
@@ -124,7 +147,7 @@ document.getElementById('incomeForm')?.addEventListener('submit', async (e) => {
 
         // Reset form
         e.target.reset();
-        document.getElementById('incomeDate').value = formatDate(currentDate);
+        document.getElementById('incomeDate').value = getTodayDateString();
 
         // Reload data
         loadTodayIncome();
@@ -309,3 +332,100 @@ async function loadStreaks() {
         console.error('Error loading streaks:', error);
     }
 }
+
+// Edit expense
+async function editExpense(id, description, category, amount, date) {
+    // Create a simple modal using prompt (in production, use a proper modal)
+    const newAmount = prompt('Enter new amount:', amount);
+    if (newAmount === null) return; // User cancelled
+
+    const newCategory = prompt('Enter new category (food/transport/education/entertainment/others):', category);
+    if (newCategory === null) return;
+
+    const newDescription = prompt('Enter new description:', description);
+    if (newDescription === null) return;
+
+    const newDate = prompt('Enter new date (YYYY-MM-DD):', date);
+    if (newDate === null) return;
+
+    try {
+        await apiCall(`/api/expenses/${id}`, 'PUT', {
+            amount: parseFloat(newAmount),
+            category: newCategory,
+            description: newDescription,
+            date: newDate
+        });
+        showAlert('Expense updated successfully!', 'success');
+        loadTodayExpenses();
+        loadTodayStats();
+    } catch (error) {
+        showAlert(error.message || 'Failed to update expense', 'error');
+    }
+}
+
+// Delete expense
+async function deleteExpense(id) {
+    if (!confirm('Are you sure you want to delete this expense?')) {
+        return;
+    }
+
+    try {
+        await apiCall(`/api/expenses/${id}`, 'DELETE');
+        showAlert('Expense deleted successfully!', 'success');
+        loadTodayExpenses();
+        loadTodayStats();
+    } catch (error) {
+        showAlert('Failed to delete expense', 'error');
+    }
+}
+
+// Load today's savings
+async function loadTodaySavings() {
+    try {
+        const today = formatDate(currentDate);
+        const savings = await apiCall(`/api/savings?date=${today}`);
+
+        const container = document.getElementById('savingsList');
+
+        if (savings.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">No savings recorded today</p>';
+            return;
+        }
+
+        container.innerHTML = savings.map(saving => `
+            <div class="list-item">
+                <div>
+                    <strong>${saving.goal || 'Savings'}</strong><br>
+                    <small style="color: var(--text-secondary);">${saving.date}</small>
+                </div>
+                <div style="font-weight: 700; font-size: 1.1rem; color: var(--accent-primary);">${formatCurrency(saving.amount)}</div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading savings:', error);
+    }
+}
+
+// Add savings
+document.getElementById('savingsForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const amount = parseFloat(document.getElementById('savingsAmount').value);
+    const goal = document.getElementById('savingsGoal').value;
+    const date = document.getElementById('savingsDate').value;
+
+    try {
+        await apiCall('/api/savings', 'POST', { amount, goal, date });
+        showAlert('Savings added successfully!', 'success');
+
+        // Reset form
+        e.target.reset();
+        document.getElementById('savingsDate').value = getTodayDateString();
+
+        // Reload data
+        loadTodaySavings();
+        loadTodayStats();
+    } catch (error) {
+        showAlert(error.message || 'Failed to add savings', 'error');
+    }
+});

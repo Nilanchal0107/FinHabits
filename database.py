@@ -76,10 +76,28 @@ def init_db():
             user_id INTEGER NOT NULL,
             date DATE NOT NULL,
             completed BOOLEAN DEFAULT 0,
+            duration_minutes INTEGER DEFAULT 0,
+            time_slots TEXT,
+            topic TEXT,
+            tasks TEXT,
+            notes TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (habit_id) REFERENCES habits (id),
             FOREIGN KEY (user_id) REFERENCES users (id),
             UNIQUE(habit_id, date)
+        )
+    ''')
+    
+    # Savings table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS savings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            amount REAL NOT NULL,
+            goal TEXT,
+            date DATE NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
     
