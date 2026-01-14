@@ -28,8 +28,9 @@
             Track your finances and habits to build a better future
         </p>
 
+
         <!-- Quick Stats -->
-        <div class="grid grid-3 mb-4">
+        <div class="grid grid-4 mb-4">
             <div class="stat-card" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
                 <div class="stat-value" id="todaySpending">₹0.00</div>
                 <div class="stat-label">Today's Spending</div>
@@ -37,6 +38,10 @@
             <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
                 <div class="stat-value" id="monthSpending">₹0.00</div>
                 <div class="stat-label">This Month's Spending</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <div class="stat-value" id="monthSavings">₹0.00</div>
+                <div class="stat-label">This Month's Savings</div>
             </div>
             <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669);">
                 <div class="stat-value" id="habitsCompleted">0</div>
@@ -121,6 +126,33 @@
                 <div style="margin-top: 2rem;">
                     <h4 style="margin-bottom: 1rem;">🔥 Your Streaks</h4>
                     <div id="streaksList"></div>
+                </div>
+            </div>
+
+            <!-- Savings Tracker -->
+            <div class="card">
+                <h3 class="card-title">💰 Track Savings</h3>
+                <form id="savingsForm">
+                    <div class="form-group">
+                        <label class="form-label">Amount (₹)</label>
+                        <input type="number" id="savingsAmount" class="form-input" step="0.01" min="0" required
+                            placeholder="500.00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Goal (Optional)</label>
+                        <input type="text" id="savingsGoal" class="form-input"
+                            placeholder="Emergency fund, Vacation, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" id="savingsDate" class="form-input" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Add Savings</button>
+                </form>
+
+                <div style="margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Today's Savings</h4>
+                    <div id="savingsList"></div>
                 </div>
             </div>
         </div>

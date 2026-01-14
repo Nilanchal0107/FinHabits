@@ -132,6 +132,12 @@ def expenses():
         description = data.get('description', '')
         date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
         
+        # Validate that date is not in the future
+        expense_date = datetime.strptime(date, '%Y-%m-%d').date()
+        today = datetime.now().date()
+        if expense_date > today:
+            return jsonify({'error': 'Cannot add expenses for future dates'}), 400
+        
         conn = get_db_connection()
         conn.execute(
             'INSERT INTO expenses (user_id, amount, category, description, date) VALUES (?, ?, ?, ?, ?)',
@@ -165,6 +171,58 @@ def expenses():
         
         return jsonify([dict(e) for e in expenses_data])
 
+@app.route('/api/expenses/<int:expense_id>', methods=['PUT', 'DELETE'])
+def edit_expense(expense_id):
+    """Update or delete a specific expense"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    # Verify ownership
+    expense = conn.execute(
+        'SELECT * FROM expenses WHERE id = ? AND user_id = ?',
+        (expense_id, user_id)
+    ).fetchone()
+    
+    if not expense:
+        conn.close()
+        return jsonify({'error': 'Expense not found'}), 404
+    
+    if request.method == 'PUT':
+        data = request.json
+        amount = data.get('amount')
+        category = data.get('category')
+        description = data.get('description', '')
+        date = data.get('date')
+        
+        # Validate that date is not in the future
+        if date:
+            expense_date = datetime.strptime(date, '%Y-%m-%d').date()
+            today = datetime.now().date()
+            if expense_date > today:
+                conn.close()
+                return jsonify({'error': 'Cannot set expense date to future'}), 400
+        
+        conn.execute('''
+            UPDATE expenses 
+            SET amount = ?, category = ?, description = ?, date = ?
+            WHERE id = ? AND user_id = ?
+        ''', (amount, category, description, date, expense_id, user_id))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Expense updated'})
+    
+    elif request.method == 'DELETE':
+        conn.execute('DELETE FROM expenses WHERE id = ? AND user_id = ?', (expense_id, user_id))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Expense deleted'})
+
+
 # ==================== INCOME API ====================
 
 @app.route('/api/income', methods=['GET', 'POST'])
@@ -180,6 +238,12 @@ def income():
         amount = data.get('amount')
         source = data.get('source')
         date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+        
+        # Validate that date is not in the future
+        income_date = datetime.strptime(date, '%Y-%m-%d').date()
+        today = datetime.now().date()
+        if income_date > today:
+            return jsonify({'error': 'Cannot add income for future dates'}), 400
         
         conn = get_db_connection()
         conn.execute(
@@ -213,6 +277,61 @@ def income():
         conn.close()
         
         return jsonify([dict(i) for i in income_data])
+
+# ==================== SAVINGS API ====================
+
+@app.route('/api/savings', methods=['GET', 'POST'])
+def savings():
+    """Get or add savings"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_id = session['user_id']
+    
+    if request.method == 'POST':
+        data = request.json
+        amount = data.get('amount')
+        goal = data.get('goal', '')
+        date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+        
+        # Validate that date is not in the future
+        savings_date = datetime.strptime(date, '%Y-%m-%d').date()
+        today = datetime.now().date()
+        if savings_date > today:
+            return jsonify({'error': 'Cannot add savings for future dates'}), 400
+        
+        conn = get_db_connection()
+        conn.execute(
+            'INSERT INTO savings (user_id, amount, goal, date) VALUES (?, ?, ?, ?)',
+            (user_id, amount, goal, date)
+        )
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Savings added'})
+    
+    else:  # GET
+        date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+        month = request.args.get('month')
+        
+        conn = get_db_connection()
+        
+        if month:
+            year, month_num = month.split('-')
+            savings_data = conn.execute('''
+                SELECT * FROM savings 
+                WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
+                ORDER BY date DESC
+            ''', (user_id, year, month_num)).fetchall()
+        else:
+            savings_data = conn.execute(
+                'SELECT * FROM savings WHERE user_id = ? AND date = ? ORDER BY id DESC',
+                (user_id, date)
+            ).fetchall()
+        
+        conn.close()
+        
+        return jsonify([dict(s) for s in savings_data])
 
 # ==================== HABIT API ====================
 
@@ -407,12 +526,30 @@ def calendar_data(year, month):
         GROUP BY date
     ''', (user_id, year, month)).fetchall()
     
+    # Get daily income totals
+    daily_income = conn.execute('''
+        SELECT date, SUM(amount) as total
+        FROM income
+        WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
+        GROUP BY date
+    ''', (user_id, year, month)).fetchall()
+    
+    # Get daily savings totals
+    daily_savings = conn.execute('''
+        SELECT date, SUM(amount) as total
+        FROM savings
+        WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
+        GROUP BY date
+    ''', (user_id, year, month)).fetchall()
+    
     conn.close()
     
     # Format data
     calendar_info = {
         'expenses': {row['date']: row['total'] for row in daily_expenses},
-        'habits': {row['date']: row['completed_count'] for row in daily_habits}
+        'habits': {row['date']: row['completed_count'] for row in daily_habits},
+        'income': {row['date']: row['total'] for row in daily_income},
+        'savings': {row['date']: row['total'] for row in daily_savings}
     }
     
     return jsonify(calendar_info)
@@ -466,12 +603,26 @@ def today_stats():
         WHERE user_id = ? AND date = ? AND completed = 1
     ''', (user_id, today)).fetchone()
     
+    # Today's savings
+    today_savings = conn.execute(
+        'SELECT SUM(amount) as total FROM savings WHERE user_id = ? AND date = ?',
+        (user_id, today)
+    ). fetchone()
+    
+    # This month's savings
+    month_savings = conn.execute('''
+        SELECT SUM(amount) as total FROM savings 
+        WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
+    ''', (user_id, str(year), f'{month:02d}')).fetchone()
+    
     conn.close()
     
     return jsonify({
         'today_spending': today_expenses['total'] or 0,
         'month_spending': month_expenses['total'] or 0,
-        'habits_completed_today': habits_completed['count'] or 0
+        'habits_completed_today': habits_completed['count'] or 0,
+        'today_savings': today_savings['total'] or 0,
+        'month_savings': month_savings['total'] or 0
     })
 
 if __name__ == '__main__':
