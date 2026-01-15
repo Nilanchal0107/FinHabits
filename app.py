@@ -154,11 +154,32 @@ def chatbot():
         if not GEMINI_API_KEY:
             return jsonify({'error': 'AI service not configured'}), 500
         
-        # Simple financial advice
+        # Financial topic filtering
+        financial_keywords = [
+            'budget', 'money', 'save', 'saving', 'expense', 'income', 'spending', 
+            'financial', 'finance', 'cost', 'price', 'pay', 'invest', 'investment',
+            'debt', 'credit', 'loan', 'bank', 'account', 'habit', 'track', 'afford',
+            'earn', 'salary', 'wage', 'fee', 'tax', 'rupee', 'dollar', 'currency',
+            'cash', 'fund', 'asset', 'profit', 'loss', 'balance', 'transaction',
+            'payment', 'purchase', 'buying', 'sell', 'economical', 'cheap', 'expensive',
+'wealth', 'rich', 'poor', 'scholarship', 'tuition', 'rent', 'bill'
+        ]
+        
+        message_lower = user_message.lower()
+        is_financial = any(keyword in message_lower for keyword in financial_keywords)
+        
+        # Reject non-financial questions
+        if not is_financial:
+            return jsonify({
+                'response': "I don't have expertise in this topic. I'm specifically designed to help with financial matters like budgeting, saving money, managing expenses, and building good financial habits. Please ask me something related to personal finance!",
+                'is_relevant': False
+            })
+        
+        # Simple financial advice for finance-related questions
         try:
             model = genai.GenerativeModel('models/gemini-2.5-flash')
             prompt = f"""You are a helpful financial advisor for students. 
-Answer this question in 2-3 sentences: {user_message}"""
+Answer this question in 2-3 sentences, focusing on practical financial advice: {user_message}"""
             
             response = model.generate_content(prompt)
             ai_response = response.text
