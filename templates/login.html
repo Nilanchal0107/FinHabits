@@ -6,75 +6,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - FinHabits</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
+    <!-- Navigation -->
     <nav class="navbar">
         <a href="/" class="navbar-brand">💰 FinHabits</a>
         <ul class="navbar-nav">
+            <li><a href="/" class="nav-link">Home</a></li>
             <li><a href="/signup" class="nav-link">Sign Up</a></li>
             <li><button id="themeToggle" class="theme-toggle">🌙</button></li>
         </ul>
     </nav>
 
+    <!-- Login Container -->
     <div class="container">
-        <div style="max-width: 500px; margin: 4rem auto;">
-            <div class="card">
-                <h2 class="text-center mb-3">Welcome Back!</h2>
-                <p class="text-center text-secondary mb-4">Login to continue tracking your habits and spending</p>
-
-                <div id="alertContainer"></div>
-
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label class="form-label" for="email">Email Address</label>
-                        <input type="email" id="email" class="form-input" required placeholder="your.email@example.com">
+        <div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 2rem 0;">
+            <div style="width: 100%; max-width: 480px;">
+                <!-- Login Card -->
+                <div class="card" style="padding: 3rem;">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <div style="font-size: 3.5rem; margin-bottom: 1rem;">🔐</div>
+                        <h2 style="margin-bottom: 0.5rem;">Welcome Back!</h2>
+                        <p style="color: var(--text-muted); margin-bottom: 0;">
+                            Login to continue your financial journey
+                        </p>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="password">Password</label>
-                        <input type="password" id="password" class="form-input" required
-                            placeholder="Enter your password">
+                    <!-- Alert Container -->
+                    <div id="alertContainer"></div>
+
+                    <!-- Login Form -->
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" id="email" class="form-input" placeholder="your.email@example.com"
+                                required autocomplete="email">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <input type="password" id="password" class="form-input" placeholder="Enter your password"
+                                required autocomplete="current-password">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-full">
+                            <span>Login to Dashboard</span>
+                            <span>→</span>
+                        </button>
+                    </form>
+
+                    <!-- Divider -->
+                    <div style="margin: 2rem 0; text-align: center; position: relative;">
+                        <div
+                            style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--border-subtle);">
+                        </div>
+                        <span
+                            style="position: relative; background: var(--bg-card); padding: 0 1rem; color: var(--text-muted); font-size: 0.875rem;">
+                            New to FinHabits?
+                        </span>
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
-                </form>
+                    <!-- Sign Up Link -->
+                    <a href="/signup" class="btn btn-secondary w-full">
+                        Create New Account
+                    </a>
+                </div>
 
-                <p class="text-center mt-3" style="color: var(--text-secondary);">
-                    Don't have an account? <a href="/signup"
-                        style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">Sign up here</a>
-                </p>
+                <!-- Additional Info -->
+                <div style="text-align: center; margin-top: 2rem; color: var(--text-muted); font-size: 0.875rem;">
+                    <p>✨ Track expenses • Build habits • Get AI insights</p>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        const loginForm = document.getElementById('loginForm');
+        const alertContainer = document.getElementById('alertContainer');
+
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            const alertContainer = document.getElementById('alertContainer');
-            alertContainer.innerHTML = '';
-
             try {
-                const result = await apiCall('/login', 'POST', { email, password });
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
 
-                if (result.success) {
-                    alertContainer.innerHTML = '<div class="alert alert-success">Login successful! Redirecting...</div>';
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Login successful! Redirecting...', 'success');
                     setTimeout(() => {
                         window.location.href = '/dashboard';
                     }, 1000);
                 } else {
-                    alertContainer.innerHTML = `<div class="alert alert-error">${result.message}</div>`;
+                    showAlert(data.message || 'Login failed. Please try again.', 'error');
                 }
             } catch (error) {
-                alertContainer.innerHTML = '<div class="alert alert-error">Login failed. Please try again.</div>';
+                showAlert('An error occurred. Please try again.', 'error');
+                console.error('Login error:', error);
             }
         });
+
+        function showAlert(message, type) {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
     </script>
 </body>
 

@@ -17,6 +17,18 @@ if [ ! -f .env ]; then
     read -p "Press enter to continue..."
 fi
 
+# If a .env file exists, export its variables so the Python app can read them
+if [ -f .env ]; then
+    echo "Loading environment variables from .env"
+    # Export all variables defined in .env (ignores commented lines)
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+    echo "Environment variables loaded."
+    echo ""
+fi
+
 # Initialize database if it doesn't exist
 if [ ! -f finhabits.db ]; then
     echo "Initializing database..."

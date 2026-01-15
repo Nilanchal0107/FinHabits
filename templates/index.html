@@ -3,96 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinHabits - Connect Your Habits with Your Spending</title>
+    <title>FinHabits - Transform Your Financial Future</title>
+    <meta name="description" content="Track your money, build better habits, and discover the connection between them. AI-powered personal finance for students.">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Navigation -->
     <nav class="navbar">
         <a href="/" class="navbar-brand">💰 FinHabits</a>
         <ul class="navbar-nav">
+            <li><a href="/login" class="nav-link">Login</a></li>
+            <li><a href="/signup" class="btn btn-primary btn-sm">Get Started</a></li>
             <li><button id="themeToggle" class="theme-toggle">🌙</button></li>
         </ul>
     </nav>
 
+    <!-- Hero Section -->
     <div class="container">
         <div class="hero">
-            <h1>FinHabits</h1>
+            <h1>Transform Your Financial Future</h1>
             <p class="hero-subtitle">
-                <strong>Your habits shape your spending. Understand the connection.</strong>
+                <strong>Your habits shape your spending. Understand the connection.</strong><br>
+                Track expenses, build habits, and get AI-powered insights to make smarter financial decisions.
             </p>
             
-            <div style="max-width: 800px; margin: 2rem auto; text-align: left;">
-                <div class="card mb-3">
-                    <h3>📊 What is FinHabits?</h3>
-                    <p class="card-text">
-                        FinHabits is a beginner-friendly web application designed for students and first-time budget trackers. 
-                        Unlike traditional expense trackers, FinHabits connects your daily habits with your spending patterns 
-                        to help you make smarter financial decisions.
-                    </p>
-                </div>
-
-                <div class="card mb-3">
-                    <h3>✨ Why FinHabits is Unique</h3>
-                    <p class="card-text">
-                        Most apps only show you <em>what</em> you spend. FinHabits shows you <em>why</em>. 
-                        By tracking both your expenses and daily habits (study, exercise, coding, etc.), 
-                        we help you discover how your lifestyle choices influence your financial behavior.
-                    </p>
-                </div>
-
-                <div class="card mb-3">
-                    <h3>🎯 Key Objectives</h3>
-                    <ul style="color: var(--text-secondary); line-height: 2;">
-                        <li>📝 Track daily expenses across multiple categories</li>
-                        <li>💵 Monitor income sources</li>
-                        <li>✅ Log daily habits and maintain streaks</li>
-                        <li>📅 Visualize your financial journey on a custom calendar</li>
-                        <li>🤖 Get AI-powered insights and personalized suggestions</li>
-                        <li>🏆 Stay motivated with achievement tracking</li>
-                    </ul>
-                </div>
-
-                <div class="card" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover)); color: white; border: none;">
-                    <h3 style="color: white;">💡 One-Line Description</h3>
-                    <p style="font-size: 1.25rem; font-weight: 600; margin: 0; opacity: 0.95;">
-                        "Track your money, build better habits, and discover the connection between them."
-                    </p>
-                </div>
+            <!-- CTA Buttons -->
+            <div class="flex flex-center gap-3 mt-4">
+                <a href="/signup" class="btn btn-primary btn-lg">
+                    <span>Start Your Journey</span>
+                    <span>→</span>
+                </a>
+                <a href="/login" class="btn btn-secondary btn-lg">
+                    Login
+                </a>
             </div>
 
-            <div class="flex flex-center gap-2 mt-4">
-                <a href="/signup" class="btn btn-primary">Get Started - Sign Up</a>
-                <a href="/login" class="btn btn-secondary">Already have an account? Login</a>
+            <!-- Social Proof -->
+            <div style="margin-top: 3rem; padding: 2rem; background: var(--glass-bg); backdrop-filter: blur(10px); border-radius: var(--radius-xl); border: 1px solid var(--glass-border); max-width: 600px; margin-left: auto; margin-right: auto;">
+                <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 2rem;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 800; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">100%</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem;">Free</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 800; background: var(--gradient-success); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">AI</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem;">Powered</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 800; background: var(--gradient-pink); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Simple</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem;">& Easy</div>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- Feature Highlights -->
         <div class="grid grid-3 mt-4">
             <div class="card">
-                <div style="font-size: 3rem; text-align: center;">📊</div>
-                <h3 class="card-title text-center">Expense Tracking</h3>
+                <div style="font-size: 3.5rem; text-align: center; margin-bottom: 1rem;">📊</div>
+                <h3 class="card-title text-center">Smart Expense Tracking</h3>
                 <p class="card-text text-center">
-                    Categorize and track every rupee you spend across food, transport, education, entertainment, and more.
+                    Categorize and track every rupee across food, transport, education, entertainment, and more. See where your money goes at a glance.
                 </p>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <span class="category-badge category-food">Food</span>
+                    <span class="category-badge category-transport">Transport</span>
+                    <span class="category-badge category-education">Education</span>
+                </div>
             </div>
 
             <div class="card">
-                <div style="font-size: 3rem; text-align: center;">✅</div>
-                <h3 class="card-title text-center">Habit Tracking</h3>
+                <div style="font-size: 3.5rem; text-align: center; margin-bottom: 1rem;">✅</div>
+                <h3 class="card-title text-center">Build Powerful Habits</h3>
                 <p class="card-text text-center">
-                    Mark your daily habits as complete and build streaks. See how consistency impacts your spending.
+                    Track daily habits like study, exercise, and coding. Build impressive streaks and discover how consistency impacts your spending.
                 </p>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <span class="streak-badge">
+                        <span>🔥</span>
+                        <span>15 Day Streak!</span>
+                    </span>
+                </div>
             </div>
 
             <div class="card">
-                <div style="font-size: 3rem; text-align: center;">🤖</div>
-                <h3 class="card-title text-center">AI Insights</h3>
+                <div style="font-size: 3.5rem; text-align: center; margin-bottom: 1rem;">🤖</div>
+                <h3 class="card-title text-center">AI-Powered Insights</h3>
                 <p class="card-text text-center">
-                    Get monthly summaries, comparisons, and personalized suggestions from our AI financial advisor.
+                    Get personalized monthly summaries, spending comparisons, and actionable advice from Google Gemini AI to improve your finances.
                 </p>
+                <div style="text-align: center; margin-top: 1.5rem; padding: 0.75rem; background: var(--glass-bg); border-radius: var(--radius-md); font-size: 0.875rem; color: var(--text-secondary);">
+                    "You spent 20% less this month! 🎉"
+                </div>
             </div>
+        </div>
+
+        <!-- What Makes Us Unique -->
+        <div style="margin-top: 4rem; text-align: center;">
+            <h2 style="margin-bottom: 2rem;">
+                <span class="gradient-text">Why FinHabits is Different</span>
+            </h2>
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3 class="card-title">💡 Connect Habits & Spending</h3>
+                    <p class="card-text">
+                        Most apps only show you <em>what</em> you spend. FinHabits shows you <em>why</em>. 
+                        By tracking both expenses and daily habits, we help you discover how your lifestyle influences your financial behavior.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🎯 Built for Students</h3>
+                    <p class="card-text">
+                        Designed for first-time budget trackers with simple language, beginner-friendly interface, 
+                        and features that matter to students managing limited income.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">📅 Visual Monthly Calendar</h3>
+                    <p class="card-text">
+                        See your entire month at a glance with our custom calendar showing expenses, habit completion, 
+                        and daily patterns. Spot trends and make better decisions.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🌙 Beautiful Dark Mode</h3>
+                    <p class="card-text">
+                        Modern, minimal design with smooth dark mode. Easy on the eyes for extended use, 
+                        with professional gradients and premium aesthetics.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Features List -->
+        <div style="margin-top: 4rem; padding: 3rem; background: var(--glass-bg); backdrop-filter: blur(20px); border-radius: var(--radius-2xl); border: 1px solid var(--glass-border);">
+            <h3 style="text-align: center; margin-bottom: 2rem; font-size: 2rem;">
+                Everything You Need to Succeed
+            </h3>
+            <div class="grid grid-2">
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="font-size: 1.5rem;">✨</div>
+                    <div>
+                        <strong style="display: block; margin-bottom: 0.25rem;">User Authentication</strong>
+                        <span style="color: var(--text-muted); font-size: 0.95rem;">Secure signup and login system</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="font-size: 1.5rem;">💸</div>
+                    <div>
+                        <strong style="display: block; margin-bottom: 0.25rem;">Expense & Income Tracking</strong>
+                        <span style="color: var(--text-muted); font-size: 0.95rem;">Monitor all money in and out</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="font-size: 1.5rem;">🏆</div>
+                    <div>
+                        <strong style="display: block; margin-bottom: 0.25rem;">Habit Streaks</strong>
+                        <span style="color: var(--text-muted); font-size: 0.95rem;">Build and maintain consistency</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="font-size: 1.5rem;">📈</div>
+                    <div>
+                        <strong style="display: block; margin-bottom: 0.25rem;">Monthly Summaries</strong>
+                        <span style="color: var(--text-muted); font-size: 0.95rem;">Comprehensive financial overviews</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="font-size: 1.5rem;">🎨</div>
+                    <div>
+                        <strong style="display: block; margin-bottom: 0.25rem;">Dark/Light Themes</strong>
+                        <span style="color: var(--text-muted); font-size: 0.95rem;">Toggle between beautiful themes</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="font-size: 1.5rem;">📱</div>
+                    <div>
+                        <strong style="display: block; margin-bottom: 0.25rem;">Fully Responsive</strong>
+                        <span style="color: var(--text-muted); font-size: 0.95rem;">Works on desktop and mobile</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final CTA -->
+        <div style="margin: 4rem 0; text-align: center; padding: 3rem; background: var(--gradient-aurora); border-radius: var(--radius-2xl); position: relative; overflow: hidden;">
+            <div style="position: relative; z-index: 1;">
+                <h2 style="color: white; margin-bottom: 1rem; font-size: 2.5rem;">
+                    Ready to Transform Your Finances?
+                </h2>
+                <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.125rem; margin-bottom: 2rem;">
+                    Join students who are taking control of their money and building better habits.
+                </p>
+                <a href="/signup" class="btn btn-secondary btn-lg" style="background: white; color: var(--text-inverse); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);">
+                    <span>Start Free Today</span>
+                    <span>→</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 2rem 0; color: var(--text-muted); font-size: 0.875rem; border-top: 1px solid var(--border-subtle);">
+            <p>Built with ❤️ for students learning to manage their finances</p>
+            <p style="margin-top: 0.5rem;">Free • Open Source • AI-Powered</p>
         </div>
     </div>
 

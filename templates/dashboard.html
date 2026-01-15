@@ -6,14 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - FinHabits</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
+    <!-- Navigation -->
     <nav class="navbar">
         <a href="/dashboard" class="navbar-brand">💰 FinHabits</a>
         <ul class="navbar-nav">
-            <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+            <li><a href="/dashboard" class="nav-link" style="color: var(--accent-primary);">Dashboard</a></li>
             <li><a href="/calendar" class="nav-link">Calendar</a></li>
             <li><a href="/insights" class="nav-link">AI Insights</a></li>
             <li><span class="nav-link">👤 {{ username }}</span></li>
@@ -23,152 +23,236 @@
     </nav>
 
     <div class="container">
-        <h1>Welcome, {{ username }}! 👋</h1>
-        <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 2rem;">
-            Track your finances and habits to build a better future
-        </p>
-
+        <!-- Welcome Header -->
+        <div style="margin-bottom: 2rem;">
+            <h1 style="margin-bottom: 0.5rem;">
+                Welcome, <span class="gradient-text">{{ username }}</span>! 👋
+            </h1>
+            <p style="color: var(--text-secondary); font-size: 1.125rem;">
+                Select a date to track your finances and habits
+            </p>
+        </div>
 
         <!-- Quick Stats -->
-        <div class="grid grid-4 mb-4">
-            <div class="stat-card" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
-                <div class="stat-value" id="todaySpending">₹0.00</div>
-                <div class="stat-label">Today's Spending</div>
+        <div class="grid grid-3 mb-4">
+            <div class="stat-card" style="background: var(--gradient-fire);">
+                <div style="position: relative; z-index: 10;">
+                    <div class="stat-value" id="todaySpending">₹0</div>
+                    <div class="stat-label">Today's Spending</div>
+                </div>
             </div>
-            <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                <div class="stat-value" id="monthSpending">₹0.00</div>
-                <div class="stat-label">This Month's Spending</div>
+            <div class="stat-card" style="background: var(--gradient-warning);">
+                <div style="position: relative; z-index: 10;">
+                    <div class="stat-value" id="monthSpending">₹0</div>
+                    <div class="stat-label">This Month's Spending</div>
+                </div>
             </div>
-            <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
-                <div class="stat-value" id="monthSavings">₹0.00</div>
-                <div class="stat-label">This Month's Savings</div>
-            </div>
-            <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669);">
-                <div class="stat-value" id="habitsCompleted">0</div>
-                <div class="stat-label">Habits Completed Today</div>
+            <div class="stat-card" style="background: var(--gradient-success);">
+                <div style="position: relative; z-index: 10;">
+                    <div class="stat-value" id="habitsCompleted">0</div>
+                    <div class="stat-label">Habits Completed Today</div>
+                </div>
             </div>
         </div>
 
-        <!-- Main Dashboard Grid -->
-        <div class="dashboard-grid">
-            <!-- Expense Tracker -->
+        <!-- Calendar-First Interface -->
+        <div class="grid grid-2" style="gap: 2rem; align-items: start;">
+            <!-- Calendar Section -->
             <div class="card">
-                <h3 class="card-title">💸 Track Expense</h3>
-                <form id="expenseForm">
-                    <div class="form-group">
-                        <label class="form-label">Amount (₹)</label>
-                        <input type="number" id="expenseAmount" class="form-input" step="0.01" min="0" required
-                            placeholder="100.00">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Category</label>
-                        <select id="expenseCategory" class="form-select" required>
-                            <option value="food">Food</option>
-                            <option value="transport">Transport</option>
-                            <option value="education">Education</option>
-                            <option value="entertainment">Entertainment</option>
-                            <option value="others">Others</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Description</label>
-                        <input type="text" id="expenseDescription" class="form-input" placeholder="Lunch at cafe">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Date</label>
-                        <input type="date" id="expenseDate" class="form-input" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Add Expense</button>
-                </form>
+                <h3 class="card-title">
+                    <span>📅</span>
+                    <span>Select Date</span>
+                </h3>
+                <div style="text-align: center;">
+                    <input type="date" id="selectedDate" class="form-input" 
+                           style="font-size: 1.125rem; text-align: center; cursor: pointer;">
+                    <p id="selectedDateDisplay" style="margin-top: 1rem; color: var(--text-muted); font-size: 0.95rem;">
+                        No date selected
+                    </p>
+                </div>
 
-                <div style="margin-top: 2rem;">
-                    <h4 style="margin-bottom: 1rem;">Today's Expenses</h4>
-                    <div id="expensesList"></div>
+                <!-- Action Selector -->
+                <div id="actionSelector" class="hidden" style="margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem; font-size: 1.125rem; color: var(--text-primary);">
+                        What would you like to add?
+                    </h4>
+                    <div class="grid grid-3" style="gap: 1rem;">
+                        <button id="btnAddExpense" class="btn btn-primary" style="flex-direction: column; padding: 1.5rem;">
+                            <span style="font-size: 2rem; margin-bottom: 0.5rem;">💸</span>
+                            <span>Expense</span>
+                        </button>
+                        <button id="btnAddIncome" class="btn btn-success" style="flex-direction: column; padding: 1.5rem;">
+                            <span style="font-size: 2rem; margin-bottom: 0.5rem;">💵</span>
+                            <span>Income</span>
+                        </button>
+                        <button id="btnTrackHabit" class="btn btn-secondary" style="flex-direction: column; padding: 1.5rem;">
+                            <span style="font-size: 2rem; margin-bottom: 0.5rem;">✅</span>
+                            <span>Habit</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Income Tracker -->
+            <!-- Form Section -->
             <div class="card">
-                <h3 class="card-title">💵 Track Income</h3>
-                <form id="incomeForm">
-                    <div class="form-group">
-                        <label class="form-label">Amount (₹)</label>
-                        <input type="number" id="incomeAmount" class="form-input" step="0.01" min="0" required
-                            placeholder="1000.00">
+                <div id="emptyState">
+                    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--text-secondary);">Ready to Track</h4>
+                        <p style="font-size: 0.95rem;">Select a date and choose an action to get started</p>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Source</label>
-                        <input type="text" id="incomeSource" class="form-input" required
-                            placeholder="Part-time job, Allowance, etc.">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Date</label>
-                        <input type="date" id="incomeDate" class="form-input" required>
-                    </div>
-                    <button type="submit" class="btn btn-success" style="width: 100%;">Add Income</button>
-                </form>
+                </div>
 
-                <div style="margin-top: 2rem;">
-                    <h4 style="margin-bottom: 1rem;">Today's Income</h4>
-                    <div id="incomeList"></div>
+                <!-- Expense Form -->
+                <div id="expenseFormContainer" class="hidden">
+                    <h3 class="card-title">
+                        <span>💸</span>
+                        <span id="expenseFormTitle">Add Expense</span>
+                    </h3>
+                    <form id="expenseForm">
+                        <input type="hidden" id="expenseId" value="">
+                        <div class="form-group">
+                            <label class="form-label">Amount (₹)</label>
+                            <input type="number" id="expenseAmount" class="form-input" step="0.01" min="0" required
+                                placeholder="100.00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select id="expenseCategory" class="form-select" required>
+                                <option value="food">🍔 Food</option>
+                                <option value="transport">🚗 Transport</option>
+                                <option value="education">📚 Education</option>
+                                <option value="entertainment">🎬 Entertainment</option>
+                                <option value="others">📦 Others</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <input type="text" id="expenseDescription" class="form-input" placeholder="Lunch at cafe">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                                <span id="expenseSubmitText">Add Expense</span>
+                            </button>
+                            <button type="button" id="cancelExpense" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Income Form -->
+                <div id="incomeFormContainer" class="hidden">
+                    <h3 class="card-title">
+                        <span>💵</span>
+                        <span id="incomeFormTitle">Add Income</span>
+                    </h3>
+                    <form id="incomeForm">
+                        <input type="hidden" id="incomeId" value="">
+                        <div class="form-group">
+                            <label class="form-label">Amount (₹)</label>
+                            <input type="number" id="incomeAmount" class="form-input" step="0.01" min="0" required
+                                placeholder="1000.00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Source</label>
+                            <input type="text" id="incomeSource" class="form-input" required
+                                placeholder="Part-time job, Allowance, etc.">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="submit" class="btn btn-success" style="flex: 1;">
+                                <span id="incomeSubmitText">Add Income</span>
+                            </button>
+                            <button type="button" id="cancelIncome" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Habit Form -->
+                <div id="habitFormContainer" class="hidden">
+                    <h3 class="card-title">
+                        <span>✅</span>
+                        <span>Track Habits</span>
+                    </h3>
+                    <p class="card-text">Mark your daily habits as complete</p>
+                    <div id="habitsList" style="margin-bottom: 1.5rem;"></div>
+                    <button type="button" id="cancelHabit" class="btn btn-secondary w-full">Cancel</button>
                 </div>
             </div>
+        </div>
 
-            <!-- Habit Tracker -->
-            <div class="card">
-                <h3 class="card-title">✅ Track Habits</h3>
-                <p class="card-text">Mark your daily habits as complete</p>
-
-                <div id="habitsList" style="margin-bottom: 1rem;"></div>
-
-                <button id="addHabitBtn" class="btn btn-secondary" style="width: 100%;">+ Add Custom Habit</button>
-
-                <div style="margin-top: 2rem;">
-                    <h4 style="margin-bottom: 1rem;">🔥 Your Streaks</h4>
-                    <div id="streaksList"></div>
+        <!-- Data for Selected Date -->
+        <div id="selectedDateData" class="hidden" style="margin-top: 2rem;">
+            <h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">
+                Data for <span id="dataDateDisplay" style="color: var(--accent-primary);"></span>
+            </h3>
+            
+            <div class="grid grid-3">
+                <!-- Expenses List -->
+                <div class="card">
+                    <h4 style="margin-bottom: 1rem; font-size: 1.125rem; color: var(--text-primary);">
+                        💸 Expenses
+                    </h4>
+                    <div id="expensesList" style="max-height: 300px; overflow-y: auto;"></div>
                 </div>
-            </div>
 
-            <!-- Savings Tracker -->
-            <div class="card">
-                <h3 class="card-title">💰 Track Savings</h3>
-                <form id="savingsForm">
-                    <div class="form-group">
-                        <label class="form-label">Amount (₹)</label>
-                        <input type="number" id="savingsAmount" class="form-input" step="0.01" min="0" required
-                            placeholder="500.00">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Goal (Optional)</label>
-                        <input type="text" id="savingsGoal" class="form-input"
-                            placeholder="Emergency fund, Vacation, etc.">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Date</label>
-                        <input type="date" id="savingsDate" class="form-input" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Add Savings</button>
-                </form>
+                <!-- Income List -->
+                <div class="card">
+                    <h4 style="margin-bottom: 1rem; font-size: 1.125rem; color: var(--text-primary);">
+                        💵 Income
+                    </h4>
+                    <div id="incomeList" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
 
-                <div style="margin-top: 2rem;">
-                    <h4 style="margin-bottom: 1rem;">Today's Savings</h4>
-                    <div id="savingsList"></div>
+                <!-- Habits List -->
+                <div class="card">
+                    <h4 style="margin-bottom: 1rem; font-size: 1.125rem; color: var(--text-primary);">
+                        ✅ Habits
+                    </h4>
+                    <div id="habitsDataList" style="max-height: 300px; overflow-y: auto;"></div>
                 </div>
             </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="grid grid-2 mt-4">
-            <a href="/calendar" class="card" style="text-decoration: none; text-align: center;">
-                <div style="font-size: 3rem;">📅</div>
-                <h3 class="card-title">View Calendar</h3>
+            <a href="/calendar" class="card" style="text-decoration: none; text-align: center; cursor: pointer;">
+                <div style="font-size: 3.5rem; margin-bottom: 1rem;">📅</div>
+                <h3 class="card-title text-center">View Calendar</h3>
                 <p class="card-text">See your financial journey month by month</p>
             </a>
-            <a href="/insights" class="card" style="text-decoration: none; text-align: center;">
-                <div style="font-size: 3rem;">🤖</div>
-                <h3 class="card-title">AI Insights</h3>
+            <a href="/insights" class="card" style="text-decoration: none; text-align: center; cursor: pointer;">
+                <div style="font-size: 3.5rem; margin-bottom: 1rem;">🤖</div>
+                <h3 class="card-title text-center">AI Insights</h3>
                 <p class="card-text">Get personalized financial advice and summaries</p>
             </a>
+        </div>
+    </div>
+
+    <!-- Add Habit Modal (for creating custom habits) -->
+    <div id="addHabitModal" class="modal hidden">
+        <div class="modal-content card" style="max-width: 500px; margin: 2rem auto;">
+            <h3 class="card-title">Add Custom Habit</h3>
+            <form id="addHabitForm">
+                <div class="form-group">
+                    <label class="form-label">Habit Name</label>
+                    <input type="text" id="newHabitName" class="form-input" required placeholder="e.g., Meditation">
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Add Habit</button>
+                    <button type="button" id="cancelAddHabit" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal hidden">
+        <div class="modal-content card" style="max-width: 400px; margin: 2rem auto;">
+            <h3 class="card-title">Confirm Delete</h3>
+            <p id="deleteMessage" class="card-text"></p>
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                <button id="confirmDelete" class="btn btn-danger" style="flex: 1;">Delete</button>
+                <button id="cancelDelete" class="btn btn-secondary">Cancel</button>
+            </div>
         </div>
     </div>
 

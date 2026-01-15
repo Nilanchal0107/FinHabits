@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendar - FinHabits</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
+    <!-- Navigation -->
     <nav class="navbar">
         <a href="/dashboard" class="navbar-brand">💰 FinHabits</a>
         <ul class="navbar-nav">
             <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
-            <li><a href="/calendar" class="nav-link">Calendar</a></li>
+            <li><a href="/calendar" class="nav-link" style="color: var(--accent-primary);">Calendar</a></li>
             <li><a href="/insights" class="nav-link">AI Insights</a></li>
             <li><span class="nav-link">👤 {{ username }}</span></li>
             <li><a href="/logout" class="nav-link">Logout</a></li>
@@ -23,48 +23,113 @@
     </nav>
 
     <div class="container">
-        <h1>📅 Monthly Calendar</h1>
-        <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 2rem;">
-            View your financial journey and habit tracking at a glance
-        </p>
+        <!-- Header -->
+        <div style="margin-bottom: 2rem;">
+            <h1 style="margin-bottom: 0.5rem;">
+                <span class="gradient-text">Financial Calendar</span> 📅
+            </h1>
+            <p style="color: var(--text-secondary); font-size: 1.125rem;">
+                Visualize your monthly expenses and habit completion at a glance
+            </p>
+        </div>
 
+        <!-- Calendar Container -->
         <div class="calendar">
+            <!-- Calendar Header -->
             <div class="calendar-header">
-                <button id="prevMonth" class="btn btn-secondary">← Previous</button>
-                <h2 id="currentMonth" style="margin: 0;">Loading...</h2>
-                <button id="nextMonth" class="btn btn-secondary">Next →</button>
+                <button id="prevMonth" class="btn btn-secondary">
+                    <span>←</span>
+                    <span>Previous</span>
+                </button>
+
+                <h2 id="currentMonthYear" style="margin: 0; font-size: 1.75rem;">
+                    <!-- Dynamic month/year -->
+                </h2>
+
+                <button id="nextMonth" class="btn btn-secondary">
+                    <span>Next</span>
+                    <span>→</span>
+                </button>
             </div>
 
-            <div class="calendar-grid" id="calendarGrid">
-                <!-- Calendar will be rendered here by JavaScript -->
+            <!-- Day of Week Headers -->
+            <div class="calendar-grid" style="margin-bottom: 0.5rem;">
+                <div
+                    style="text-align: center; font-weight: 600; padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                    Sun</div>
+                <div
+                    style="text-align: center; font-weight: 600; padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                    Mon</div>
+                <div
+                    style="text-align: center; font-weight: 600; padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                    Tue</div>
+                <div
+                    style="text-align: center; font-weight: 600; padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                    Wed</div>
+                <div
+                    style="text-align: center; font-weight: 600; padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                    Thu</div>
+                <div
+                    style="text-align: center; font-weight: 600; padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                    Fri</div>
+                <div
+                    style="text-align: center; font-weight: 600; padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                    Sat</div>
+            </div>
+
+            <!-- Calendar Days Grid -->
+            <div id="calendarDays" class="calendar-grid">
+                <!-- Generated dynamically -->
             </div>
         </div>
 
-        <!-- Day Details Panel -->
-        <div id="dayDetails" class="card mt-4" style="display: none;">
-            <!-- Details will be shown here -->
-        </div>
-
-        <div class="card mt-4">
-            <h3>📊 Legend</h3>
-            <div class="grid grid-2" style="margin-top: 1rem;">
-                <div class="list-item">
-                    <span>Red numbers:</span>
-                    <span style="color: var(--danger); font-weight: 700;">Daily expenses</span>
-                </div>
-                <div class="list-item">
-                    <span>Green checkmarks:</span>
-                    <span style="color: var(--success); font-weight: 700;">Habits completed</span>
-                </div>
-                <div class="list-item">
-                    <span>Blue border:</span>
-                    <span style="color: var(--accent-primary); font-weight: 700;">Today's date</span>
-                </div>
-                <div class="list-item">
-                    <span>Click any day:</span>
-                    <span style="font-weight: 600;">View detailed breakdown</span>
+        <!-- Legend -->
+        <div class="grid grid-2 mt-4">
+            <div class="card">
+                <h3 class="card-title">📊 Color Legend</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div
+                            style="width: 30px; height: 30px; border-radius: 0.5rem; background: rgba(239, 68, 68, 0.3); border: 2px solid var(--danger);">
+                        </div>
+                        <span>High Spending Day (shows amount)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div
+                            style="width: 30px; height: 30px; border-radius: 0.5rem; background: rgba(16, 185, 129, 0.3); border: 2px solid var(--success);">
+                        </div>
+                        <span>Habit Completed (shows count)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div
+                            style="width: 30px; height: 30px; border-radius: 0.5rem; background: rgba(139, 92, 246, 0.2); border: 2px solid var(--accent-primary);">
+                        </div>
+                        <span>Today</span>
+                    </div>
                 </div>
             </div>
+
+            <div class="card">
+                <h3 class="card-title">💡 Tips</h3>
+                <ul style="color: var(--text-secondary); line-height: 1.8; padding-left: 1.5rem;">
+                    <li>Click any day to see detailed information</li>
+                    <li>Green indicators show habit completion count</li>
+                    <li>Red indicators show total expenses</li>
+                    <li>Navigate months using arrow buttons</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Nav -->
+        <div class="grid grid-2 mt-4">
+            <a href="/dashboard" class="btn btn-secondary w-full">
+                <span>←</span>
+                <span>Back to Dashboard</span>
+            </a>
+            <a href="/insights" class="btn btn-primary w-full">
+                <span>View AI Insights</span>
+                <span>→</span>
+            </a>
         </div>
     </div>
 

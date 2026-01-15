@@ -5,12 +5,17 @@ A beginner-friendly web app connecting daily habits with spending behavior
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 import os
-from database import get_db_connection, init_db
+from database import get_db, init_db
 from ai_advisor import generate_ai_insights
 
+# Load environment variables from .env file
+load_dotenv()
+
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # For session management
+# Use a consistent secret key for dev, or random for prod
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
 # Initialize database on startup
 init_db()
@@ -32,16 +37,18 @@ def login():
         email = data.get('email')
         password = data.get('password')
         
-        conn = get_db_connection()
-        user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
-        conn.close()
-        
-        if user and check_password_hash(user['password_hash'], password):
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            return jsonify({'success': True, 'message': 'Login successful'})
-        else:
-            return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+        try:
+            with get_db() as conn:
+                user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+                
+            if user and check_password_hash(user['password_hash'], password):
+                session['user_id'] = user['id']
+                session['username'] = user['username']
+                return jsonify({'success': True, 'message': 'Login successful'})
+            else:
+                return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
     
     return render_template('login.html')
 
@@ -60,26 +67,30 @@ def signup():
         password_hash = generate_password_hash(password)
         
         try:
-            conn = get_db_connection()
-            conn.execute(
-                'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
-                (username, email, password_hash)
-            )
-            conn.commit()
-            
-            # Initialize default habits for new user
-            user = conn.execute('SELECT id FROM users WHERE email = ?', (email,)).fetchone()
-            user_id = user['id']
-            
-            default_habits = ['Study', 'Coding', 'Exercise']
-            for habit_name in default_habits:
+            with get_db() as conn:
+                # Check if email exists
+                existing = conn.execute('SELECT id FROM users WHERE email = ?', (email,)).fetchone()
+                if existing:
+                    return jsonify({'success': False, 'message': 'Email already registered'}), 400
+
                 conn.execute(
-                    'INSERT INTO habits (user_id, name, is_custom) VALUES (?, ?, ?)',
-                    (user_id, habit_name, False)
+                    'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+                    (username, email, password_hash)
                 )
-            conn.commit()
-            conn.close()
-            
+                conn.commit()
+                
+                # Initialize default habits for new user
+                user = conn.execute('SELECT id FROM users WHERE email = ?', (email,)).fetchone()
+                user_id = user['id']
+                
+                default_habits = ['Study', 'Coding', 'Exercise']
+                for habit_name in default_habits:
+                    conn.execute(
+                        'INSERT INTO habits (user_id, name, is_custom) VALUES (?, ?, ?)',
+                        (user_id, habit_name, False)
+                    )
+                conn.commit()
+                
             return jsonify({'success': True, 'message': 'Account created successfully'})
         except Exception as e:
             return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 400
@@ -115,6 +126,98 @@ def insights_page():
         return redirect(url_for('login'))
     return render_template('insights.html', username=session.get('username'))
 
+# ==================== CHATBOT API ====================
+
+@app.route('/api/chatbot', methods=['POST'])
+def chatbot():
+    """Financial advisor chatbot endpoint"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.json
+        user_message = data.get('message', '').strip()
+        
+        if not user_message:
+            return jsonify({'error': 'Message cannot be empty'}), 400
+        
+        # Financial context enforcement
+        financial_keywords = [
+            'money', 'expense', 'income', 'budget', 'save', 'saving', 'spend', 'spending',
+            'finance', 'financial', 'credit', 'debit', 'payment', 'investment', 'invest',
+            'debt', 'loan', 'salary', 'tax', 'bank', 'account', 'transaction', 'habit',
+            'cost', 'price', 'afford', 'wealthy', 'poor', 'rich', 'economical', 'economic',
+            'rupee', 'dollar', 'currency', 'cash', 'fund', 'asset', 'liability', 'profit',
+            'loss', 'revenue', 'balance', '₹', '$'
+        ]
+        
+        # Check if message is finance-related
+        is_finance_related = any(keyword in user_message.lower() for keyword in financial_keywords)
+        
+        if not is_finance_related:
+            return jsonify({
+                'response': "I'm specifically designed to help with financial matters and student budgeting. I don't have expertise in other topics. Please ask me about expenses, income, savings, budgeting, or financial habits!",
+                'is_relevant': False
+            })
+        
+        # Use Gemini API for financial advice
+        import google.generativeai as genai
+        import os
+        
+        api_key = os.getenv('GEMINI_API_KEY', '')
+        if not api_key:
+            return jsonify({'error': 'AI service not configured'}), 500
+        
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('models/gemini-2.5-flash')
+        
+        # Create system context for financial advisor
+        system_prompt = """You are a helpful financial advisor assistant for students using the FinHabits app.
+        Your role is to provide practical, actionable financial advice for students and young adults.
+        
+        Focus on:
+        - Budgeting strategies
+        - Expense tracking tips
+        - Saving money as a student
+        - Building good financial habits
+        - Managing income and expenses
+        - Financial planning basics
+        
+        Keep responses:
+        - Concise (2-3 sentences)
+        - Practical and actionable
+        - Friendly and encouraging
+        - Relevant to students
+        
+        Do not provide investment advice or complex financial instruments."""
+        
+        full_prompt = f"{system_prompt}\n\nUser question: {user_message}\n\nYour response:"
+        
+        try:
+            response = model.generate_content(full_prompt)
+            ai_response = response.text
+            
+            print(f"Chatbot - User: {user_message}")
+            print(f"Chatbot - AI Response: {ai_response}")
+            
+            return jsonify({
+                'response': ai_response,
+                'is_relevant': True
+            })
+        except Exception as gemini_error:
+            print(f"Gemini API error: {str(gemini_error)}")
+            return jsonify({
+                'response': "I'm having trouble connecting to my AI service. Please try again in a moment.",
+                'is_relevant': True
+            })
+        
+    except Exception as e:
+        print(f"Chatbot error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to get response. Please try again.'}), 500
+
+
 # ==================== EXPENSE API ====================
 
 @app.route('/api/expenses', methods=['GET', 'POST'])
@@ -125,102 +228,93 @@ def expenses():
     
     user_id = session['user_id']
     
-    if request.method == 'POST':
-        data = request.json
-        amount = data.get('amount')
-        category = data.get('category')
-        description = data.get('description', '')
-        date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+    try:
+        if request.method == 'POST':
+            data = request.json
+            amount = data.get('amount')
+            category = data.get('category')
+            description = data.get('description', '')
+            date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+            
+            # Validate date is not in the future
+            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+            if date_obj > datetime.now().date():
+                return jsonify({'error': 'Cannot add expenses for future dates'}), 400
+            
+            with get_db() as conn:
+                conn.execute(
+                    'INSERT INTO expenses (user_id, amount, category, description, date) VALUES (?, ?, ?, ?, ?)',
+                    (user_id, amount, category, description, date)
+                )
+                conn.commit()
+            
+            return jsonify({'success': True, 'message': 'Expense added'})
         
-        # Validate that date is not in the future
-        expense_date = datetime.strptime(date, '%Y-%m-%d').date()
-        today = datetime.now().date()
-        if expense_date > today:
-            return jsonify({'error': 'Cannot add expenses for future dates'}), 400
-        
-        conn = get_db_connection()
-        conn.execute(
-            'INSERT INTO expenses (user_id, amount, category, description, date) VALUES (?, ?, ?, ?, ?)',
-            (user_id, amount, category, description, date)
-        )
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': 'Expense added'})
-    
-    else:  # GET
-        date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
-        month = request.args.get('month')
-        
-        conn = get_db_connection()
-        
-        if month:  # Get all expenses for a month
-            year, month_num = month.split('-')
-            expenses_data = conn.execute('''
-                SELECT * FROM expenses 
-                WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
-                ORDER BY date DESC
-            ''', (user_id, year, month_num)).fetchall()
-        else:  # Get expenses for a specific date
-            expenses_data = conn.execute(
-                'SELECT * FROM expenses WHERE user_id = ? AND date = ? ORDER BY id DESC',
-                (user_id, date)
-            ).fetchall()
-        
-        conn.close()
-        
-        return jsonify([dict(e) for e in expenses_data])
+        else:  # GET
+            date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+            month = request.args.get('month')
+            
+            with get_db() as conn:
+                if month:  # Get all expenses for a month
+                    year, month_num = month.split('-')
+                    expenses_data = conn.execute('''
+                        SELECT * FROM expenses 
+                        WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
+                        ORDER BY date DESC
+                    ''', (user_id, year, month_num)).fetchall()
+                else:  # Get expenses for a specific date
+                    expenses_data = conn.execute(
+                        'SELECT * FROM expenses WHERE user_id = ? AND date = ? ORDER BY id DESC',
+                        (user_id, date)
+                    ).fetchall()
+            
+            return jsonify([dict(e) for e in expenses_data])
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/expenses/<int:expense_id>', methods=['PUT', 'DELETE'])
-def edit_expense(expense_id):
+def update_delete_expense(expense_id):
     """Update or delete a specific expense"""
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     
     user_id = session['user_id']
-    conn = get_db_connection()
     
-    # Verify ownership
-    expense = conn.execute(
-        'SELECT * FROM expenses WHERE id = ? AND user_id = ?',
-        (expense_id, user_id)
-    ).fetchone()
+    try:
+        with get_db() as conn:
+            # Verify ownership
+            expense = conn.execute('SELECT * FROM expenses WHERE id = ? AND user_id = ?', 
+                                 (expense_id, user_id)).fetchone()
+            if not expense:
+                return jsonify({'error': 'Expense not found or unauthorized'}), 404
+            
+            if request.method == 'PUT':
+                data = request.json
+                amount = data.get('amount')
+                category = data.get('category')
+                description = data.get('description', '')
+                date = data.get('date')
+                
+                # Validate date is not in the future
+                date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+                if date_obj > datetime.now().date():
+                    return jsonify({'error': 'Cannot set expenses for future dates'}), 400
+                
+                conn.execute(
+                    'UPDATE expenses SET amount = ?, category = ?, description = ?, date = ? WHERE id = ?',
+                    (amount, category, description, date, expense_id)
+                )
+                conn.commit()
+                return jsonify({'success': True, 'message': 'Expense updated'})
+            
+            elif request.method == 'DELETE':
+                conn.execute('DELETE FROM expenses WHERE id = ?', (expense_id,))
+                conn.commit()
+                return jsonify({'success': True, 'message': 'Expense deleted'})
     
-    if not expense:
-        conn.close()
-        return jsonify({'error': 'Expense not found'}), 404
-    
-    if request.method == 'PUT':
-        data = request.json
-        amount = data.get('amount')
-        category = data.get('category')
-        description = data.get('description', '')
-        date = data.get('date')
-        
-        # Validate that date is not in the future
-        if date:
-            expense_date = datetime.strptime(date, '%Y-%m-%d').date()
-            today = datetime.now().date()
-            if expense_date > today:
-                conn.close()
-                return jsonify({'error': 'Cannot set expense date to future'}), 400
-        
-        conn.execute('''
-            UPDATE expenses 
-            SET amount = ?, category = ?, description = ?, date = ?
-            WHERE id = ? AND user_id = ?
-        ''', (amount, category, description, date, expense_id, user_id))
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': 'Expense updated'})
-    
-    elif request.method == 'DELETE':
-        conn.execute('DELETE FROM expenses WHERE id = ? AND user_id = ?', (expense_id, user_id))
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': 'Expense deleted'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 # ==================== INCOME API ====================
@@ -233,105 +327,91 @@ def income():
     
     user_id = session['user_id']
     
-    if request.method == 'POST':
-        data = request.json
-        amount = data.get('amount')
-        source = data.get('source')
-        date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+    try:
+        if request.method == 'POST':
+            data = request.json
+            amount = data.get('amount')
+            source = data.get('source')
+            date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+            
+            # Validate date is not in the future
+            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+            if date_obj > datetime.now().date():
+                return jsonify({'error': 'Cannot add income for future dates'}), 400
+            
+            with get_db() as conn:
+                conn.execute(
+                    'INSERT INTO income (user_id, amount, source, date) VALUES (?, ?, ?, ?)',
+                    (user_id, amount, source, date)
+                )
+                conn.commit()
+            
+            return jsonify({'success': True, 'message': 'Income added'})
         
-        # Validate that date is not in the future
-        income_date = datetime.strptime(date, '%Y-%m-%d').date()
-        today = datetime.now().date()
-        if income_date > today:
-            return jsonify({'error': 'Cannot add income for future dates'}), 400
-        
-        conn = get_db_connection()
-        conn.execute(
-            'INSERT INTO income (user_id, amount, source, date) VALUES (?, ?, ?, ?)',
-            (user_id, amount, source, date)
-        )
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': 'Income added'})
-    
-    else:  # GET
-        date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
-        month = request.args.get('month')
-        
-        conn = get_db_connection()
-        
-        if month:
-            year, month_num = month.split('-')
-            income_data = conn.execute('''
-                SELECT * FROM income 
-                WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
-                ORDER BY date DESC
-            ''', (user_id, year, month_num)).fetchall()
-        else:
-            income_data = conn.execute(
-                'SELECT * FROM income WHERE user_id = ? AND date = ? ORDER BY id DESC',
-                (user_id, date)
-            ).fetchall()
-        
-        conn.close()
-        
-        return jsonify([dict(i) for i in income_data])
+        else:  # GET
+            date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+            month = request.args.get('month')
+            
+            with get_db() as conn:
+                if month:
+                    year, month_num = month.split('-')
+                    income_data = conn.execute('''
+                        SELECT * FROM income 
+                        WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
+                        ORDER BY date DESC
+                    ''', (user_id, year, month_num)).fetchall()
+                else:
+                    income_data = conn.execute(
+                        'SELECT * FROM income WHERE user_id = ? AND date = ? ORDER BY id DESC',
+                        (user_id, date)
+                    ).fetchall()
+            
+            return jsonify([dict(i) for i in income_data])
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-# ==================== SAVINGS API ====================
-
-@app.route('/api/savings', methods=['GET', 'POST'])
-def savings():
-    """Get or add savings"""
+@app.route('/api/income/<int:income_id>', methods=['PUT', 'DELETE'])
+def update_delete_income(income_id):
+    """Update or delete a specific income"""
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     
     user_id = session['user_id']
     
-    if request.method == 'POST':
-        data = request.json
-        amount = data.get('amount')
-        goal = data.get('goal', '')
-        date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
-        
-        # Validate that date is not in the future
-        savings_date = datetime.strptime(date, '%Y-%m-%d').date()
-        today = datetime.now().date()
-        if savings_date > today:
-            return jsonify({'error': 'Cannot add savings for future dates'}), 400
-        
-        conn = get_db_connection()
-        conn.execute(
-            'INSERT INTO savings (user_id, amount, goal, date) VALUES (?, ?, ?, ?)',
-            (user_id, amount, goal, date)
-        )
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': 'Savings added'})
+    try:
+        with get_db() as conn:
+            # Verify ownership
+            income = conn.execute('SELECT * FROM income WHERE id = ? AND user_id = ?', 
+                                (income_id, user_id)).fetchone()
+            if not income:
+                return jsonify({'error': 'Income not found or unauthorized'}), 404
+            
+            if request.method == 'PUT':
+                data = request.json
+                amount = data.get('amount')
+                source = data.get('source')
+                date = data.get('date')
+                
+                # Validate date is not in the future
+                date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+                if date_obj > datetime.now().date():
+                    return jsonify({'error': 'Cannot set income for future dates'}), 400
+                
+                conn.execute(
+                    'UPDATE income SET amount = ?, source = ?, date = ? WHERE id = ?',
+                    (amount, source, date, income_id)
+                )
+                conn.commit()
+                return jsonify({'success': True, 'message': 'Income updated'})
+            
+            elif request.method == 'DELETE':
+                conn.execute('DELETE FROM income WHERE id = ?', (income_id,))
+                conn.commit()
+                return jsonify({'success': True, 'message': 'Income deleted'})
     
-    else:  # GET
-        date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
-        month = request.args.get('month')
-        
-        conn = get_db_connection()
-        
-        if month:
-            year, month_num = month.split('-')
-            savings_data = conn.execute('''
-                SELECT * FROM savings 
-                WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
-                ORDER BY date DESC
-            ''', (user_id, year, month_num)).fetchall()
-        else:
-            savings_data = conn.execute(
-                'SELECT * FROM savings WHERE user_id = ? AND date = ? ORDER BY id DESC',
-                (user_id, date)
-            ).fetchall()
-        
-        conn.close()
-        
-        return jsonify([dict(s) for s in savings_data])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ==================== HABIT API ====================
 
@@ -343,29 +423,31 @@ def habits():
     
     user_id = session['user_id']
     
-    if request.method == 'POST':
-        data = request.json
-        habit_name = data.get('name')
+    try:
+        if request.method == 'POST':
+            data = request.json
+            habit_name = data.get('name')
+            
+            with get_db() as conn:
+                conn.execute(
+                    'INSERT INTO habits (user_id, name, is_custom) VALUES (?, ?, ?)',
+                    (user_id, habit_name, True)
+                )
+                conn.commit()
+            
+            return jsonify({'success': True, 'message': 'Habit added'})
         
-        conn = get_db_connection()
-        conn.execute(
-            'INSERT INTO habits (user_id, name, is_custom) VALUES (?, ?, ?)',
-            (user_id, habit_name, True)
-        )
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': 'Habit added'})
-    
-    else:  # GET
-        conn = get_db_connection()
-        habits_data = conn.execute(
-            'SELECT * FROM habits WHERE user_id = ? ORDER BY id',
-            (user_id,)
-        ).fetchall()
-        conn.close()
-        
-        return jsonify([dict(h) for h in habits_data])
+        else:  # GET
+            with get_db() as conn:
+                habits_data = conn.execute(
+                    'SELECT * FROM habits WHERE user_id = ? ORDER BY id',
+                    (user_id,)
+                ).fetchall()
+            
+            return jsonify([dict(h) for h in habits_data])
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/habits/log', methods=['GET', 'POST'])
 def habit_log():
@@ -375,73 +457,77 @@ def habit_log():
     
     user_id = session['user_id']
     
-    if request.method == 'POST':
-        data = request.json
-        habit_id = data.get('habit_id')
-        date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
-        completed = data.get('completed', True)
+    try:
+        if request.method == 'POST':
+            data = request.json
+            habit_id = data.get('habit_id')
+            date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+            completed = data.get('completed', True)
+            
+            # Validate date is not in the future
+            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+            if date_obj > datetime.now().date():
+                return jsonify({'error': 'Cannot log habits for future dates'}), 400
+            
+            # Get detailed tracking fields
+            duration_minutes = data.get('duration_minutes', 0)
+            time_slots = data.get('time_slots', '')
+            topic = data.get('topic', '')
+            tasks = data.get('tasks', '')
+            notes = data.get('notes', '')
+            
+            with get_db() as conn:
+                # Check if log exists
+                existing = conn.execute(
+                    'SELECT * FROM habit_logs WHERE habit_id = ? AND date = ?',
+                    (habit_id, date)
+                ).fetchone()
+                
+                if existing:
+                    # Update with all fields
+                    conn.execute('''
+                        UPDATE habit_logs 
+                        SET completed = ?, duration_minutes = ?, time_slots = ?, topic = ?, tasks = ?, notes = ?
+                        WHERE habit_id = ? AND date = ?
+                    ''', (completed, duration_minutes, time_slots, topic, tasks, notes, habit_id, date))
+                else:
+                    # Insert with all fields
+                    conn.execute('''
+                        INSERT INTO habit_logs 
+                        (habit_id, user_id, date, completed, duration_minutes, time_slots, topic, tasks, notes) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (habit_id, user_id, date, completed, duration_minutes, time_slots, topic, tasks, notes))
+                
+                conn.commit()
+            
+            return jsonify({'success': True})
         
-        # Get detailed tracking fields
-        duration_minutes = data.get('duration_minutes', 0)
-        time_slots = data.get('time_slots', '')
-        topic = data.get('topic', '')
-        tasks = data.get('tasks', '')
-        notes = data.get('notes', '')
-        
-        conn = get_db_connection()
-        
-        # Check if log exists
-        existing = conn.execute(
-            'SELECT * FROM habit_logs WHERE habit_id = ? AND date = ?',
-            (habit_id, date)
-        ).fetchone()
-        
-        if existing:
-            # Update with all fields
-            conn.execute('''
-                UPDATE habit_logs 
-                SET completed = ?, duration_minutes = ?, time_slots = ?, topic = ?, tasks = ?, notes = ?
-                WHERE habit_id = ? AND date = ?
-            ''', (completed, duration_minutes, time_slots, topic, tasks, notes, habit_id, date))
-        else:
-            # Insert with all fields
-            conn.execute('''
-                INSERT INTO habit_logs 
-                (habit_id, user_id, date, completed, duration_minutes, time_slots, topic, tasks, notes) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (habit_id, user_id, date, completed, duration_minutes, time_slots, topic, tasks, notes))
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'success': True})
-    
-    else:  # GET
-        date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
-        month = request.args.get('month')
-        
-        conn = get_db_connection()
-        
-        if month:
-            year, month_num = month.split('-')
-            logs = conn.execute('''
-                SELECT hl.*, h.name 
-                FROM habit_logs hl
-                JOIN habits h ON hl.habit_id = h.id
-                WHERE hl.user_id = ? AND strftime('%Y', hl.date) = ? AND strftime('%m', hl.date) = ?
-                ORDER BY hl.date DESC
-            ''', (user_id, year, month_num)).fetchall()
-        else:
-            logs = conn.execute('''
-                SELECT hl.*, h.name 
-                FROM habit_logs hl
-                JOIN habits h ON hl.habit_id = h.id
-                WHERE hl.user_id = ? AND hl.date = ?
-            ''', (user_id, date)).fetchall()
-        
-        conn.close()
-        
-        return jsonify([dict(l) for l in logs])
+        else:  # GET
+            date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+            month = request.args.get('month')
+            
+            with get_db() as conn:
+                if month:
+                    year, month_num = month.split('-')
+                    logs = conn.execute('''
+                        SELECT hl.*, h.name 
+                        FROM habit_logs hl
+                        JOIN habits h ON hl.habit_id = h.id
+                        WHERE hl.user_id = ? AND strftime('%Y', hl.date) = ? AND strftime('%m', hl.date) = ?
+                        ORDER BY hl.date DESC
+                    ''', (user_id, year, month_num)).fetchall()
+                else:
+                    logs = conn.execute('''
+                        SELECT hl.*, h.name 
+                        FROM habit_logs hl
+                        JOIN habits h ON hl.habit_id = h.id
+                        WHERE hl.user_id = ? AND hl.date = ?
+                    ''', (user_id, date)).fetchall()
+            
+            return jsonify([dict(l) for l in logs])
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ==================== STREAK API ====================
 
@@ -453,49 +539,61 @@ def streaks():
     
     user_id = session['user_id']
     
-    conn = get_db_connection()
-    
-    # Get all habits
-    habits_data = conn.execute(
-        'SELECT * FROM habits WHERE user_id = ?',
-        (user_id,)
-    ).fetchall()
-    
-    streaks_data = []
-    
-    for habit in habits_data:
-        habit_id = habit['id']
-        
-        # Get recent logs ordered by date descending
-        logs = conn.execute('''
-            SELECT date, completed FROM habit_logs
-            WHERE habit_id = ? AND completed = 1
-            ORDER BY date DESC
-        ''', (habit_id,)).fetchall()
-        
-        # Calculate current streak
-        current_streak = 0
-        today = datetime.now().date()
-        
-        if logs:
-            for log in logs:
-                log_date = datetime.strptime(log['date'], '%Y-%m-%d').date()
-                expected_date = today - timedelta(days=current_streak)
+    try:
+        with get_db() as conn:
+            # Get all habits
+            habits_data = conn.execute(
+                'SELECT * FROM habits WHERE user_id = ?',
+                (user_id,)
+            ).fetchall()
+            
+            streaks_data = []
+            
+            for habit in habits_data:
+                habit_id = habit['id']
                 
-                if log_date == expected_date:
-                    current_streak += 1
-                else:
-                    break
+                # Get recent logs ordered by date descending
+                logs = conn.execute('''
+                    SELECT date, completed FROM habit_logs
+                    WHERE habit_id = ? AND completed = 1
+                    ORDER BY date DESC
+                ''', (habit_id,)).fetchall()
+                
+                # Calculate current streak
+                current_streak = 0
+                today = datetime.now().date()
+                
+                if logs:
+                    for log in logs:
+                        log_date = datetime.strptime(log['date'], '%Y-%m-%d').date()
+                        
+                        # Only count from today or yesterday
+                        if current_streak == 0 and log_date < (today - timedelta(days=1)):
+                            break
+                            
+                        expected_date = today - timedelta(days=current_streak)
+                        # Adjustment if user hasn't logged today yet but logged yesterday
+                        if current_streak == 0 and log_date == (today - timedelta(days=1)):
+                            expected_date = today - timedelta(days=1)
+                        
+                        if log_date == expected_date:
+                            current_streak += 1
+                        elif log_date > expected_date:
+                            # Skip duplicate entries for same day if any
+                            continue
+                        else:
+                            break
+                
+                streaks_data.append({
+                    'habit_id': habit_id,
+                    'habit_name': habit['name'],
+                    'current_streak': current_streak
+                })
         
-        streaks_data.append({
-            'habit_id': habit_id,
-            'habit_name': habit['name'],
-            'current_streak': current_streak
-        })
-    
-    conn.close()
-    
-    return jsonify(streaks_data)
+        return jsonify(streaks_data)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ==================== CALENDAR API ====================
 
@@ -507,52 +605,35 @@ def calendar_data(year, month):
     
     user_id = session['user_id']
     
-    conn = get_db_connection()
-    
-    # Get daily expense totals
-    daily_expenses = conn.execute('''
-        SELECT date, SUM(amount) as total
-        FROM expenses
-        WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
-        GROUP BY date
-    ''', (user_id, year, month)).fetchall()
-    
-    # Get habit completion counts per day
-    daily_habits = conn.execute('''
-        SELECT date, COUNT(*) as completed_count
-        FROM habit_logs
-        WHERE user_id = ? AND completed = 1 
-        AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
-        GROUP BY date
-    ''', (user_id, year, month)).fetchall()
-    
-    # Get daily income totals
-    daily_income = conn.execute('''
-        SELECT date, SUM(amount) as total
-        FROM income
-        WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
-        GROUP BY date
-    ''', (user_id, year, month)).fetchall()
-    
-    # Get daily savings totals
-    daily_savings = conn.execute('''
-        SELECT date, SUM(amount) as total
-        FROM savings
-        WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
-        GROUP BY date
-    ''', (user_id, year, month)).fetchall()
-    
-    conn.close()
-    
-    # Format data
-    calendar_info = {
-        'expenses': {row['date']: row['total'] for row in daily_expenses},
-        'habits': {row['date']: row['completed_count'] for row in daily_habits},
-        'income': {row['date']: row['total'] for row in daily_income},
-        'savings': {row['date']: row['total'] for row in daily_savings}
-    }
-    
-    return jsonify(calendar_info)
+    try:
+        with get_db() as conn:
+            # Get daily expense totals
+            daily_expenses = conn.execute('''
+                SELECT date, SUM(amount) as total
+                FROM expenses
+                WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
+                GROUP BY date
+            ''', (user_id, year, month)).fetchall()
+            
+            # Get habit completion counts per day
+            daily_habits = conn.execute('''
+                SELECT date, COUNT(*) as completed_count
+                FROM habit_logs
+                WHERE user_id = ? AND completed = 1 
+                AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
+                GROUP BY date
+            ''', (user_id, year, month)).fetchall()
+        
+        # Format data
+        calendar_info = {
+            'expenses': {row['date']: row['total'] for row in daily_expenses},
+            'habits': {row['date']: row['completed_count'] for row in daily_habits}
+        }
+        
+        return jsonify(calendar_info)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ==================== AI INSIGHTS API ====================
 
@@ -581,49 +662,36 @@ def today_stats():
     user_id = session['user_id']
     today = datetime.now().strftime('%Y-%m-%d')
     
-    conn = get_db_connection()
-    
-    # Today's expenses
-    today_expenses = conn.execute(
-        'SELECT SUM(amount) as total FROM expenses WHERE user_id = ? AND date = ?',
-        (user_id, today)
-    ).fetchone()
-    
-    # This month's expenses
-    year = datetime.now().year
-    month = datetime.now().month
-    month_expenses = conn.execute('''
-        SELECT SUM(amount) as total FROM expenses 
-        WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
-    ''', (user_id, str(year), f'{month:02d}')).fetchone()
-    
-    # Today's habits completed
-    habits_completed = conn.execute('''
-        SELECT COUNT(*) as count FROM habit_logs 
-        WHERE user_id = ? AND date = ? AND completed = 1
-    ''', (user_id, today)).fetchone()
-    
-    # Today's savings
-    today_savings = conn.execute(
-        'SELECT SUM(amount) as total FROM savings WHERE user_id = ? AND date = ?',
-        (user_id, today)
-    ). fetchone()
-    
-    # This month's savings
-    month_savings = conn.execute('''
-        SELECT SUM(amount) as total FROM savings 
-        WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
-    ''', (user_id, str(year), f'{month:02d}')).fetchone()
-    
-    conn.close()
-    
-    return jsonify({
-        'today_spending': today_expenses['total'] or 0,
-        'month_spending': month_expenses['total'] or 0,
-        'habits_completed_today': habits_completed['count'] or 0,
-        'today_savings': today_savings['total'] or 0,
-        'month_savings': month_savings['total'] or 0
-    })
+    try:
+        with get_db() as conn:
+            # Today's expenses
+            today_expenses = conn.execute(
+                'SELECT SUM(amount) as total FROM expenses WHERE user_id = ? AND date = ?',
+                (user_id, today)
+            ).fetchone()
+            
+            # This month's expenses
+            year = datetime.now().year
+            month = datetime.now().month
+            month_expenses = conn.execute('''
+                SELECT SUM(amount) as total FROM expenses 
+                WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
+            ''', (user_id, str(year), f'{month:02d}')).fetchone()
+            
+            # Today's habits completed
+            habits_completed = conn.execute('''
+                SELECT COUNT(*) as count FROM habit_logs 
+                WHERE user_id = ? AND date = ? AND completed = 1
+            ''', (user_id, today)).fetchone()
+        
+        return jsonify({
+            'today_spending': today_expenses['total'] or 0,
+            'month_spending': month_expenses['total'] or 0,
+            'habits_completed_today': habits_completed['count'] or 0
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     print("✨ FinHabits is running at http://localhost:5000")

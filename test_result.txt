@@ -1,0 +1,225 @@
+﻿python : D:\Nilanchal 
+Jena\Finhabits utkarsh
+\FInhabit-main\FInhabi
+t-main\test_ai_simple.
+py:27: FutureWarning: 
+At line:1 char:1
++ python 
+test_ai_simple.py 
+2>&1 | Out-File 
+-FilePath 
+test_result.txt -E ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (D:\Nilanch   
+ al Je...FutureWar    
+ning: :String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+
+All support for the 
+`google.generativeai` 
+package has ended. It 
+will no longer be 
+receiving 
+updates or bug fixes. 
+Please switch to the 
+`google.genai` 
+package as soon as 
+possible.
+See README for more 
+details:
+
+https://github.com/goo
+gle-gemini/deprecated-
+generative-ai-python/b
+lob/main/README.md
+
+  import 
+google.generativeai 
+as genai
+WARNING: All log 
+messages before 
+absl::InitializeLog() 
+is called are written 
+to STDERR
+E0000 00:00:1768446985
+.583721   16684 alts_c
+redentials.cc:93] 
+ALTS creds ignored. 
+Not running on GCP 
+and untrusted ALTS is 
+not enabled.
+API Key found: True
+Library imported successfully
+API configured successfully
+Model created successfully
+
+Testing content generation...
+Traceback (most 
+recent call last):
+  File "D:\Nilanchal 
+Jena\Finhabits utkarsh
+\FInhabit-main\FInhabi
+t-main\test_ai_simple.
+py", line 37, in 
+<module>
+    response = model.g
+enerate_content("Hello
+, respond with just 
+'Hi'")
+               ^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^
+  File "C:\Users\nirak
+ar24\AppData\Local\Pro
+grams\Python\Python312
+\Lib\site-packages\goo
+gle\generativeai\gener
+ative_models.py", 
+line 331, in 
+generate_content
+    response = self._c
+lient.generate_content
+(
+               ^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^
+  File "C:\Users\nirak
+ar24\AppData\Local\Pro
+grams\Python\Python312
+\Lib\site-packages\goo
+gle\ai\generativelangu
+age_v1beta\services\ge
+nerative_service\clien
+t.py", line 835, in 
+generate_content
+    response = rpc(
+               ^^^^
+  File "C:\Users\nirak
+ar24\AppData\Local\Pro
+grams\Python\Python312
+\Lib\site-packages\goo
+gle\api_core\gapic_v1\
+method.py", line 131, 
+in __call__
+    return 
+wrapped_func(*args, 
+**kwargs)
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nirak
+ar24\AppData\Local\Pro
+grams\Python\Python312
+\Lib\site-packages\goo
+gle\api_core\retry\ret
+ry_unary.py", line 
+294, in 
+retry_wrapped_func
+    return 
+retry_target(
+           
+^^^^^^^^^^^^^
+  File "C:\Users\nirak
+ar24\AppData\Local\Pro
+grams\Python\Python312
+\Lib\site-packages\goo
+gle\api_core\retry\ret
+ry_unary.py", line 
+156, in retry_target
+    next_sleep = 
+_retry_error_helper(
+                 
+^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nirak
+ar24\AppData\Local\Pro
+grams\Python\Python312
+\Lib\site-packages\goo
+gle\api_core\retry\ret
+ry_base.py", line 
+214, in 
+_retry_error_helper
+    raise final_exc 
+from source_exc
+  File "C:\Users\nirak
+ar24\AppData\Local\Pro
+grams\Python\Python312
+\Lib\site-packages\goo
+gle\api_core\retry\ret
+ry_unary.py", line 
+147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "C:\Users\nirak
+ar24\AppData\Local\Pro
+grams\Python\Python312
+\Lib\site-packages\goo
+gle\api_core\timeout.p
+y", line 130, in 
+func_with_timeout
+    return 
+func(*args, **kwargs)
+           
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nirak
+ar24\AppData\Local\Pro
+grams\Python\Python312
+\Lib\site-packages\goo
+gle\api_core\grpc_help
+ers.py", line 78, in e
+rror_remapped_callable
+    raise exceptions.f
+rom_grpc_error(exc) 
+from exc
+google.api_core.except
+ions.NotFound: 404 mod
+els/gemini-1.5-flash 
+is not found for API 
+version v1beta, or is 
+not supported for 
+generateContent. Call 
+ListModels to see the 
+list of available 
+models and their 
+supported methods.
+
+During handling of 
+the above exception, 
+another exception 
+occurred:
+
+Traceback (most 
+recent call last):
+  File "D:\Nilanchal 
+Jena\Finhabits utkarsh
+\FInhabit-main\FInhabi
+t-main\test_ai_simple.
+py", line 42, in 
+<module>
+    print(f"\n\u2717 
+ERROR: {e}")
+  File "C:\Users\nirak
+ar24\AppData\Local\Pro
+grams\Python\Python312
+\Lib\encodings\cp1252.
+py", line 19, in 
+encode
+    return codecs.char
+map_encode(input,self.
+errors,encoding_table)
+[0]
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 
+'charmap' codec can't 
+encode character 
+'\u2717' in position 
+2: character maps to 
+<undefined>

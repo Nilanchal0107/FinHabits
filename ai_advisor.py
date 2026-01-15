@@ -116,7 +116,7 @@ Keep your tone friendly, supportive, and student-focused. Don't make predictions
 """
     
     try:
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('models/gemini-2.5-flash')
         response = model.generate_content(prompt)
         ai_text = response.text
         

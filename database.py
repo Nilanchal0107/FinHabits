@@ -2,19 +2,32 @@
 Database initialization and helper functions for FinHabits
 """
 import sqlite3
-import os
-from datetime import datetime
+from contextlib import contextmanager
 
 DB_PATH = 'finhabits.db'
 
 def get_db_connection():
-    """Create and return a database connection"""
-    conn = sqlite3.connect(DB_PATH)
+    """Create and return a database connection with proper timeout and settings"""
+    conn = sqlite3.connect(DB_PATH, timeout=30.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row  # Enable column access by name
+    # Enable WAL mode for better concurrent access
+    conn.execute('PRAGMA journal_mode=WAL')
+    # Set busy timeout to handle concurrent access
+    conn.execute('PRAGMA busy_timeout=30000')
     return conn
+
+@contextmanager
+def get_db():
+    """Context manager for database connections to ensure closing"""
+    conn = get_db_connection()
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 def init_db():
     """Initialize database with required tables"""
+    # Use direct connection for initialization
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -85,19 +98,6 @@ def init_db():
             FOREIGN KEY (habit_id) REFERENCES habits (id),
             FOREIGN KEY (user_id) REFERENCES users (id),
             UNIQUE(habit_id, date)
-        )
-    ''')
-    
-    # Savings table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS savings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            amount REAL NOT NULL,
-            goal TEXT,
-            date DATE NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
     
