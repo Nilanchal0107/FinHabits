@@ -1,0 +1,12 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+.env
+.venv
+venv/
+*.db
+test_*.py
+*.bat
+deployment_guide.md
+gcp_deployment_guide.md

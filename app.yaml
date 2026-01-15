@@ -1,0 +1,12 @@
+runtime: python311
+
+env_variables:
+  GEMINI_API_KEY: "AIzaSyCpKwPEk9ps9m8OtNV5X40TLUxrSKg3qzs"
+  SECRET_KEY: "finhabits-secret-key-2024"
+
+handlers:
+- url: /static
+  static_dir: static
+
+- url: /.*
+  script: auto
