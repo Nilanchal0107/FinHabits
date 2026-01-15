@@ -1,9 +1,4 @@
-*.pyc
-__pycache__/
-*.db
 .env
-venv/
-env/
-.vscode/
-.idea/
-*.log
+__pycache__/
+*.pyc
+finhabits.db
