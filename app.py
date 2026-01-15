@@ -9,9 +9,18 @@ from dotenv import load_dotenv
 import os
 from database import get_db, init_db
 from ai_advisor import generate_ai_insights
+import google.generativeai as genai
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure Gemini API globally (like ai_advisor.py does)
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    print(f"Gemini API configured globally with key: {GEMINI_API_KEY[:10]}...")
+else:
+    print("WARNING: GEMINI_API_KEY not found in environment")
 
 app = Flask(__name__)
 # Use a consistent secret key for dev, or random for prod
@@ -130,92 +139,45 @@ def insights_page():
 
 @app.route('/api/chatbot', methods=['POST'])
 def chatbot():
-    """Financial advisor chatbot endpoint"""
+    """Simple financial advisor chatbot endpoint"""
     if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+        return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        data = request.json
+        data = request.get_json()
         user_message = data.get('message', '').strip()
         
         if not user_message:
-            return jsonify({'error': 'Message cannot be empty'}), 400
+            return jsonify({'error': 'No message provided'}), 400
         
-        # Financial context enforcement
-        financial_keywords = [
-            'money', 'expense', 'income', 'budget', 'save', 'saving', 'spend', 'spending',
-            'finance', 'financial', 'credit', 'debit', 'payment', 'investment', 'invest',
-            'debt', 'loan', 'salary', 'tax', 'bank', 'account', 'transaction', 'habit',
-            'cost', 'price', 'afford', 'wealthy', 'poor', 'rich', 'economical', 'economic',
-            'rupee', 'dollar', 'currency', 'cash', 'fund', 'asset', 'liability', 'profit',
-            'loss', 'revenue', 'balance', '₹', '$'
-        ]
-        
-        # Check if message is finance-related
-        is_finance_related = any(keyword in user_message.lower() for keyword in financial_keywords)
-        
-        if not is_finance_related:
-            return jsonify({
-                'response': "I'm specifically designed to help with financial matters and student budgeting. I don't have expertise in other topics. Please ask me about expenses, income, savings, budgeting, or financial habits!",
-                'is_relevant': False
-            })
-        
-        # Use Gemini API for financial advice
-        import google.generativeai as genai
-        import os
-        
-        api_key = os.getenv('GEMINI_API_KEY', '')
-        if not api_key:
+        # Check if GEMINI_API_KEY is configured
+        if not GEMINI_API_KEY:
             return jsonify({'error': 'AI service not configured'}), 500
         
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('models/gemini-2.5-flash')
-        
-        # Create system context for financial advisor
-        system_prompt = """You are a helpful financial advisor assistant for students using the FinHabits app.
-        Your role is to provide practical, actionable financial advice for students and young adults.
-        
-        Focus on:
-        - Budgeting strategies
-        - Expense tracking tips
-        - Saving money as a student
-        - Building good financial habits
-        - Managing income and expenses
-        - Financial planning basics
-        
-        Keep responses:
-        - Concise (2-3 sentences)
-        - Practical and actionable
-        - Friendly and encouraging
-        - Relevant to students
-        
-        Do not provide investment advice or complex financial instruments."""
-        
-        full_prompt = f"{system_prompt}\n\nUser question: {user_message}\n\nYour response:"
-        
+        # Simple financial advice
         try:
-            response = model.generate_content(full_prompt)
-            ai_response = response.text
+            model = genai.GenerativeModel('models/gemini-2.5-flash')
+            prompt = f"""You are a helpful financial advisor for students. 
+Answer this question in 2-3 sentences: {user_message}"""
             
-            print(f"Chatbot - User: {user_message}")
-            print(f"Chatbot - AI Response: {ai_response}")
+            response = model.generate_content(prompt)
+            ai_response = response.text
             
             return jsonify({
                 'response': ai_response,
                 'is_relevant': True
             })
-        except Exception as gemini_error:
-            print(f"Gemini API error: {str(gemini_error)}")
+            
+        except Exception as e:
+            print(f"Gemini error: {str(e)}")
             return jsonify({
-                'response': "I'm having trouble connecting to my AI service. Please try again in a moment.",
+                'response': f"Error: {str(e)}",
                 'is_relevant': True
             })
-        
+            
     except Exception as e:
         print(f"Chatbot error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': 'Failed to get response. Please try again.'}), 500
+        return jsonify({'error': str(e)}), 500
 
 
 # ==================== EXPENSE API ====================

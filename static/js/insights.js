@@ -17,6 +17,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const year = document.getElementById('yearSelect').value;
         loadInsights(year, month);
     });
+
+    // Setup chatbot event listeners
+    const sendButton = document.getElementById('sendMessage');
+    const chatInput = document.getElementById('chatInput');
+
+    if (sendButton && chatInput) {
+        console.log('Setting up chatbot listeners...');
+        sendButton.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+    } else {
+        console.error('Chatbot elements not found:', { sendButton, chatInput });
+    }
 });
 
 function populateSelectors() {
@@ -378,20 +394,6 @@ function setTextContent(id, text) {
 }
 
 // ==================== CHATBOT FUNCTIONALITY ====================
-
-document.addEventListener('DOMContentLoaded', () => {
-    const sendButton = document.getElementById('sendMessage');
-    const chatInput = document.getElementById('chatInput');
-
-    if (sendButton && chatInput) {
-        sendButton.addEventListener('click', sendChatMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendChatMessage();
-            }
-        });
-    }
-});
 
 async function sendChatMessage() {
     const chatInput = document.getElementById('chatInput');
