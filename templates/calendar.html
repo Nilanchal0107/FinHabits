@@ -6,21 +6,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendar - FinHabits</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 </head>
 
 <body>
     <!-- Navigation -->
     <nav class="navbar">
+        <button id="menuToggle" class="menu-toggle">
+            <span>≡</span>
+        </button>
         <a href="/dashboard" class="navbar-brand">💰 FinHabits</a>
-        <ul class="navbar-nav">
-            <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
-            <li><a href="/calendar" class="nav-link" style="color: var(--accent-primary);">Calendar</a></li>
-            <li><a href="/insights" class="nav-link">AI Insights</a></li>
-            <li><span class="nav-link">👤 {{ username }}</span></li>
-            <li><a href="/logout" class="nav-link">Logout</a></li>
-            <li><button id="themeToggle" class="theme-toggle">🌙</button></li>
-        </ul>
     </nav>
+
+    <!-- Sidebar Navigation -->
+    <div id="sidebarOverlay" class="sidebar-overlay">
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>Menu</h3>
+                <button id="closeSidebar" class="close-sidebar">✕</button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="sidebar-link">
+                    <span class="sidebar-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/calendar" class="sidebar-link">
+                    <span class="sidebar-icon">📅</span>
+                    <span>Calendar</span>
+                </a>
+                <a href="/insights" class="sidebar-link">
+                    <span class="sidebar-icon">🤖</span>
+                    <span>AI Insights</span>
+                </a>
+                <div class="sidebar-divider"></div>
+                <div class="sidebar-link" onclick="showUserProfile()" style="cursor: pointer;">
+                    <span class="sidebar-icon">👤</span>
+                    <span>{{ username }}</span>
+                </div>
+                <a href="/logout" class="sidebar-link">
+                    <span class="sidebar-icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+                <div class="sidebar-divider"></div>
+                <div class="sidebar-link" onclick="showAboutModal()" style="cursor: pointer;">
+                    <span class="sidebar-icon">ℹ️</span>
+                    <span>About FinHabits</span>
+                </div>
+                <div class="sidebar-divider"></div>
+                <div class="sidebar-link" style="cursor: default;">
+                    <span class="sidebar-icon">🌓</span>
+                    <button id="sidebarThemeToggle" class="theme-toggle-sidebar">Toggle Theme</button>
+                </div>
+            </nav>
+        </div>
+    </div>
 
     <div class="container">
         <!-- Header -->
@@ -117,6 +156,20 @@
                     <li>Red indicators show total expenses</li>
                     <li>Navigate months using arrow buttons</li>
                 </ul>
+            </div>
+        </div>
+
+        <!-- Day Details Modal -->
+        <div id="dayDetailsModal" class="modal hidden">
+            <div class="modal-content card day-details-modal">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 class="card-title" id="modalDateTitle" style="margin: 0;">📅 Day Details</h3>
+                    <button onclick="closeDayDetailsModal()" class="btn-icon" style="font-size: 1.5rem;">✕</button>
+                </div>
+
+                <div id="modalDayContent">
+                    <!-- Content will be populated dynamically -->
+                </div>
             </div>
         </div>
 

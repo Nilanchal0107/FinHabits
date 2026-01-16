@@ -372,16 +372,24 @@
     <!-- User Profile Modal -->
     <div id="userProfileModal" class="modal hidden">
         <div class="modal-content card"
-            style="max-width: 800px; margin: 2rem auto; max-height: 90vh; overflow-y: auto;">
+            style="max-width: 950px; width: 92%; margin: 2rem auto; max-height: 90vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <h3 class="card-title" style="margin: 0;">👤 User Profile</h3>
                 <button onclick="hideUserProfile()" class="btn-icon" style="font-size: 1.5rem;">✕</button>
             </div>
 
-            <!-- User Stats -->
+            <!-- User Info Header -->
+            <div
+                style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: var(--gradient-primary); border-radius: var(--radius-lg); color: white;">
+                <div style="font-size: 4rem; margin-bottom: 0.5rem;">👤</div>
+                <h2 style="margin: 0; font-size: 2rem; color: white;">{{ username }}</h2>
+                <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Financial Habits Tracker</p>
+            </div>
+
+            <!-- User Stats - 3x2 Grid -->
             <div style="margin-bottom: 2rem;">
                 <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">📊 Statistics</h4>
-                <div class="grid grid-2" style="gap: 1rem;">
+                <div class="grid grid-3" style="gap: 1rem;">
                     <div
                         style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
                         <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Total
@@ -398,6 +406,13 @@
                     </div>
                     <div
                         style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Net Savings
+                        </div>
+                        <div id="netSavings" style="font-size: 1.5rem; font-weight: 700; color: var(--info);">₹0
+                        </div>
+                    </div>
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
                         <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Habits
                             Tracked</div>
                         <div id="totalHabits"
@@ -409,13 +424,39 @@
                             Streak</div>
                         <div id="currentStreak" style="font-size: 1.5rem; font-weight: 700;">🔥 0 days</div>
                     </div>
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Days Active
+                        </div>
+                        <div id="daysActive" style="font-size: 1.5rem; font-weight: 700; color: var(--warning);">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Insights -->
+            <div style="margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">💡 Financial Insights
+                </h4>
+                <div class="grid grid-2" style="gap: 1rem;">
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Avg. Daily
+                            Spending</div>
+                        <div id="avgDailySpending" style="font-size: 1.25rem; font-weight: 600;">₹0</div>
+                    </div>
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Top Spending
+                            Category</div>
+                        <div id="topCategory" style="font-size: 1.25rem; font-weight: 600;">-</div>
+                    </div>
                 </div>
             </div>
 
             <!-- Account Info -->
             <div
                 style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                <div style="font-size: 0.875rem; color: var(--text-muted);">Account Created</div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);">Member Since</div>
                 <div id="accountCreated" style="font-size: 1rem; font-weight: 600; margin-top: 0.25rem;">Loading...
                 </div>
             </div>

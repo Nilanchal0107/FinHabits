@@ -166,14 +166,114 @@ async function viewDayDetails(date) {
             message += 'No habits logged\n';
         }
 
-        // Use standard alert for now as it's reliable
-        alert(message);
+        // Show in custom modal instead of alert
+        showDayDetailsModal(date, expenses, income, habitLogs);
 
     } catch (error) {
         console.error('Error loading day details:', error);
         showToast('Failed to load details', 'error');
     }
 }
+
+// Show day details in custom modal
+function showDayDetailsModal(date, expenses, income, habitLogs) {
+    const modal = document.getElementById('dayDetailsModal');
+    const modalTitle = document.getElementById('modalDateTitle');
+    const modalContent = document.getElementById('modalDayContent');
+
+    // Update title with formatted date
+    modalTitle.innerHTML = `📅 ${formatDate(date)}`;
+
+    // Build content HTML
+    let contentHTML = '';
+
+    // Expenses Section
+    contentHTML += '<div style="margin-bottom: 1.5rem;">';
+    contentHTML += '<h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.125rem;">💸 Expenses</h4>';
+    if (expenses.length > 0) {
+        const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
+        contentHTML += '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
+        expenses.forEach(e => {
+            contentHTML += `
+                <div class="list-item" style="margin-bottom: 0;">
+                    <div>
+                        <strong>${e.category}</strong>
+                        <br><small style="color: var(--text-muted);">${e.description || 'No description'}</small>
+                    </div>
+                    <div style="font-weight: 700; color: var(--danger);">₹${formatNumber(e.amount)}</div>
+                </div>
+            `;
+        });
+        contentHTML += '</div>';
+        contentHTML += `<p style="text-align: right; margin-top: 1rem; font-weight: 700; font-size: 1.125rem;">Total: ₹${formatNumber(totalExpense)}</p>`;
+    } else {
+        contentHTML += '<p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No expenses recorded</p>';
+    }
+    contentHTML += '</div>';
+
+    // Income Section
+    contentHTML += '<div style="margin-bottom: 1.5rem;">';
+    contentHTML += '<h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.125rem;">💰 Income</h4>';
+    if (income.length > 0) {
+        const totalIncome = income.reduce((sum, i) => sum + i.amount, 0);
+        contentHTML += '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
+        income.forEach(i => {
+            contentHTML += `
+                <div class="list-item" style="margin-bottom: 0;">
+                    <strong>${i.source}</strong>
+                    <div style="font-weight: 700; color: var(--success);">₹${formatNumber(i.amount)}</div>
+                </div>
+            `;
+        });
+        contentHTML += '</div>';
+        contentHTML += `<p style="text-align: right; margin-top: 1rem; font-weight: 700; font-size: 1.125rem; color: var(--success);">Total: ₹${formatNumber(totalIncome)}</p>`;
+    } else {
+        contentHTML += '<p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No income recorded</p>';
+    }
+    contentHTML += '</div>';
+
+    // Habits Section
+    contentHTML += '<div>';
+    contentHTML += '<h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.125rem;">✅ Habits</h4>';
+    if (habitLogs.length > 0) {
+        contentHTML += '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
+        habitLogs.forEach(h => {
+            contentHTML += `
+                <div class="list-item" style="display: block; margin-bottom: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>${h.name}</strong>
+                        <span style="color: var(--success); font-size: 1.2rem;">✅</span>
+                    </div>
+                    ${h.duration_minutes ? `<div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">⏱️ ${Math.floor(h.duration_minutes / 60)}h ${h.duration_minutes % 60}m</div>` : ''}
+                    ${h.topic ? `<div style="margin-top: 0.25rem; font-size: 0.9rem; color: var(--text-secondary);">📚 ${h.topic}</div>` : ''}
+                </div>
+            `;
+        });
+        contentHTML += '</div>';
+    } else {
+        contentHTML += '<p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No habits logged</p>';
+    }
+    contentHTML += '</div>';
+
+    // Set content and show modal
+    modalContent.innerHTML = contentHTML;
+    modal.classList.remove('hidden');
+
+    // Add click outside to close
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            closeDayDetailsModal();
+        }
+    };
+}
+
+// Close day details modal
+function closeDayDetailsModal() {
+    const modal = document.getElementById('dayDetailsModal');
+    modal.classList.add('hidden');
+    modal.onclick = null;
+}
+
 
 // Helper to format date
 function formatDate(dateString) {

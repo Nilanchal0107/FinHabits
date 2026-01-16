@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTodayStats();
     setupCalendarWidget();
     setupEventListeners();
+
+    // Auto-initialize habit tracker tab with today's date
+    initializeHabitTracker();
 });
 
 // Setup tab switching
@@ -171,6 +174,15 @@ async function loadHabitDataForDate(date) {
         });
     } catch (error) {
         console.error('Error loading habit data:', error);
+    }
+}
+
+// Initialize habit tracker with today's date
+function initializeHabitTracker() {
+    const dateInputHabits = document.getElementById('selectedDateHabits');
+    if (dateInputHabits && dateInputHabits.value) {
+        // Trigger the date selection handler for habits tab
+        handleDateSelectionHabits({ target: dateInputHabits });
     }
 }
 
@@ -701,11 +713,63 @@ async function showUserProfile() {
         // Load user statistics
         const stats = await apiCall('/api/stats/all-time');
 
+        // Calculate net savings
+        const totalExpenses = stats.total_expenses || 0;
+        const totalIncome = stats.total_income || 0;
+        const netSavings = totalIncome - totalExpenses;
+
+        // Calculate days active
+        let daysActive = 0;
+        if (stats.account_created) {
+            const createdDate = new Date(stats.account_created);
+            const today = new Date();
+            const diffTime = Math.abs(today - createdDate);
+            daysActive = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // Calculate average daily spending
+        const avgDailySpending = daysActive > 0 ? totalExpenses / daysActive : 0;
+
+        // Get top spending category (requires additional API call)
+        let topCategory = '-';
+        try {
+            const allExpenses = await apiCall('/api/expenses/all');
+            if (allExpenses && allExpenses.length > 0) {
+                // Group expenses by category
+                const categoryTotals = {};
+                allExpenses.forEach(expense => {
+                    const cat = expense.category || 'Others';
+                    categoryTotals[cat] = (categoryTotals[cat] || 0) + expense.amount;
+                });
+
+                // Find category with highest total
+                let maxAmount = 0;
+                let maxCategory = '-';
+                for (const [category, amount] of Object.entries(categoryTotals)) {
+                    if (amount > maxAmount) {
+                        maxAmount = amount;
+                        maxCategory = category;
+                    }
+                }
+
+                // Format category name (capitalize first letter)
+                topCategory = maxCategory.charAt(0).toUpperCase() + maxCategory.slice(1);
+            }
+        } catch (error) {
+            console.error('Error calculating top category:', error);
+        }
+
         // Update modal with stats
-        document.getElementById('totalExpenses').textContent = formatCurrency(stats.total_expenses || 0);
-        document.getElementById('totalIncome').textContent = formatCurrency(stats.total_income || 0);
+        document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
+        document.getElementById('totalIncome').textContent = formatCurrency(totalIncome);
+        document.getElementById('netSavings').textContent = formatCurrency(netSavings);
         document.getElementById('totalHabits').textContent = stats.total_habit_logs || 0;
         document.getElementById('currentStreak').textContent = `🔥 ${stats.current_streak || 0} days`;
+        document.getElementById('daysActive').textContent = daysActive;
+
+        // Update financial insights
+        document.getElementById('avgDailySpending').textContent = formatCurrency(avgDailySpending);
+        document.getElementById('topCategory').textContent = topCategory;
 
         // Format account created date
         if (stats.account_created) {
