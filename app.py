@@ -676,6 +676,155 @@ def today_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/stats/all-time')
+def all_time_stats():
+    """Get all-time user statistics"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_id = session['user_id']
+    
+    try:
+        with get_db() as conn:
+            # Total expenses
+            total_expenses = conn.execute(
+                'SELECT SUM(amount) as total FROM expenses WHERE user_id = ?',
+                (user_id,)
+            ).fetchone()
+            
+            # Total income
+            total_income = conn.execute(
+                'SELECT SUM(amount) as total FROM income WHERE user_id = ?',
+                (user_id,)
+            ).fetchone()
+            
+            # Total habit logs
+            total_habit_logs = conn.execute(
+                'SELECT COUNT(*) as count FROM habit_logs WHERE user_id = ? AND completed = 1',
+                (user_id,)
+            ).fetchone()
+            
+            # Account created date
+            user_info = conn.execute(
+                'SELECT created_at FROM users WHERE id = ?',
+                (user_id,)
+            ).fetchone()
+            
+            # Calculate current streak (max streak across all habits)
+            habits = conn.execute(
+                'SELECT id FROM habits WHERE user_id = ?',
+                (user_id,)
+            ).fetchall()
+            
+            max_streak = 0
+            today = datetime.now().date()
+            
+            for habit in habits:
+                habit_id = habit['id']
+                
+                # Get recent logs ordered by date descending
+                logs = conn.execute('''
+                    SELECT date FROM habit_logs
+                    WHERE habit_id = ? AND completed = 1
+                    ORDER BY date DESC
+                ''', (habit_id,)).fetchall()
+                
+                # Calculate current streak
+                current_streak = 0
+                
+                if logs:
+                    for log in logs:
+                        log_date = datetime.strptime(log['date'], '%Y-%m-%d').date()
+                        
+                        # Only count from today or yesterday
+                        if current_streak == 0 and log_date < (today - timedelta(days=1)):
+                            break
+                            
+                        expected_date = today - timedelta(days=current_streak)
+                        # Adjustment if user hasn't logged today yet but logged yesterday
+                        if current_streak == 0 and log_date == (today - timedelta(days=1)):
+                            expected_date = today - timedelta(days=1)
+                        
+                        if log_date == expected_date:
+                            current_streak += 1
+                        elif log_date > expected_date:
+                            continue
+                        else:
+                            break
+                
+                max_streak = max(max_streak, current_streak)
+        
+        return jsonify({
+            'total_expenses': total_expenses['total'] or 0,
+            'total_income': total_income['total'] or 0,
+            'total_habit_logs': total_habit_logs['count'] or 0,
+            'current_streak': max_streak,
+            'account_created': user_info['created_at'] if user_info else None
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/expenses/all')
+def all_expenses():
+    """Get all expenses for data export"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_id = session['user_id']
+    
+    try:
+        with get_db() as conn:
+            expenses_data = conn.execute(
+                'SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC',
+                (user_id,)
+            ).fetchall()
+        
+        return jsonify([dict(e) for e in expenses_data])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/income/all')
+def all_income():
+    """Get all income for data export"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_id = session['user_id']
+    
+    try:
+        with get_db() as conn:
+            income_data = conn.execute(
+                'SELECT * FROM income WHERE user_id = ? ORDER BY date DESC',
+                (user_id,)
+            ).fetchall()
+        
+        return jsonify([dict(i) for i in income_data])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/habits/log/all')
+def all_habit_logs():
+    """Get all habit logs for data export"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_id = session['user_id']
+    
+    try:
+        with get_db() as conn:
+            logs = conn.execute('''
+                SELECT hl.*, h.name 
+                FROM habit_logs hl
+                JOIN habits h ON hl.habit_id = h.id
+                WHERE hl.user_id = ?
+                ORDER BY hl.date DESC
+            ''', (user_id,)).fetchall()
+        
+        return jsonify([dict(l) for l in logs])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     print("✨ FinHabits is running at http://localhost:5000")
     print("📊 Track your habits and spending wisely!")

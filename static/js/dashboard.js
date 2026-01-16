@@ -8,27 +8,65 @@ let deleteCallback = null;
 
 // Load dashboard data on page load
 document.addEventListener('DOMContentLoaded', () => {
+    setupTabSwitching();
     loadTodayStats();
     setupCalendarWidget();
     setupEventListeners();
 });
 
+// Setup tab switching
+function setupTabSwitching() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.getAttribute('data-tab');
+
+            // Update active tab button
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update active tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            if (tabName === 'finance') {
+                document.getElementById('financeTab').classList.add('active');
+            } else if (tabName === 'habits') {
+                document.getElementById('habitsTab').classList.add('active');
+            }
+        });
+    });
+}
+
 // Setup calendar widget
 function setupCalendarWidget() {
     const dateInput = document.getElementById('selectedDate');
+    const dateInputHabits = document.getElementById('selectedDateHabits');
     const today = formatDate(currentDate);
 
-    // Set default value to today
+    // Set default value to today for both date inputs
     dateInput.value = today;
+    dateInputHabits.value = today;
 
     // Set max date to today (prevent future dates)
     dateInput.max = today;
+    dateInputHabits.max = today;
 
     // Automatically trigger date selection for today
     handleDateSelection({ target: dateInput });
 
-    // Date change handler
-    dateInput.addEventListener('change', handleDateSelection);
+    // Date change handlers - sync between tabs
+    dateInput.addEventListener('change', (e) => {
+        dateInputHabits.value = e.target.value;
+        handleDateSelection(e);
+    });
+
+    dateInputHabits.addEventListener('change', (e) => {
+        dateInput.value = e.target.value;
+        handleDateSelectionHabits(e);
+    });
 }
 
 // Handle date selection
@@ -62,6 +100,78 @@ function handleDateSelection(e) {
 
     // Load data for selected date
     loadDataForDate(dateValue);
+}
+
+// Handle date selection for Habits tab
+function handleDateSelectionHabits(e) {
+    const dateValue = e.target.value;
+    if (!dateValue) return;
+
+    // Validate not future date
+    const selected = new Date(dateValue + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selected > today) {
+        showAlert('Cannot select future dates', 'error');
+        e.target.value = '';
+        return;
+    }
+
+    selectedDate = dateValue;
+
+    // Update UI - Format as dd/mm/yyyy
+    const displayDate = new Date(dateValue + 'T00:00:00').toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    document.getElementById('selectedDateDisplayHabits').textContent = displayDate;
+    document.getElementById('actionSelectorHabits').classList.remove('hidden');
+
+    // Load habit data for selected date  
+    loadHabitDataForDate(dateValue);
+}
+
+// Load habit data for the Habits tab
+async function loadHabitDataForDate(date) {
+    try {
+        const habitLogs = await apiCall(`/api/habits/log?date=${date}`);
+        const container = document.getElementById('habitsDataList');
+
+        if (habitLogs.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">No habits tracked</p>';
+            document.getElementById('selectedDateDataHabits').classList.add('hidden');
+            return;
+        }
+
+        container.innerHTML = habitLogs.map(log => {
+            const hours = Math.floor((log.duration_minutes || 0) / 60);
+            const minutes = (log.duration_minutes || 0) % 60;
+            return `
+                <div class="list-item" style="display: block;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                        <strong>${log.name}</strong>
+                        <span style="color: var(--success); font-size: 1.2rem;">✅</span>
+                    </div>
+                    ${log.duration_minutes ? `<div style="font-size: 0.9rem; color: var(--text-secondary);">⏱️ ${hours}h ${minutes}m</div>` : ''}
+                    ${log.topic ? `<div style="font-size: 0.9rem; color: var(--text-secondary);">📚 ${log.topic}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        // Show data section for habits
+        document.getElementById('selectedDateDataHabits').classList.remove('hidden');
+        document.getElementById('dataDateDisplayHabits').textContent = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    } catch (error) {
+        console.error('Error loading habit data:', error);
+    }
 }
 
 // Setup event listeners
@@ -584,3 +694,277 @@ async function loadTodayStats() {
         console.error('Error loading stats:', error);
     }
 }
+
+// Show user profile modal
+async function showUserProfile() {
+    try {
+        // Load user statistics
+        const stats = await apiCall('/api/stats/all-time');
+
+        // Update modal with stats
+        document.getElementById('totalExpenses').textContent = formatCurrency(stats.total_expenses || 0);
+        document.getElementById('totalIncome').textContent = formatCurrency(stats.total_income || 0);
+        document.getElementById('totalHabits').textContent = stats.total_habit_logs || 0;
+        document.getElementById('currentStreak').textContent = `🔥 ${stats.current_streak || 0} days`;
+
+        // Format account created date
+        if (stats.account_created) {
+            const createdDate = new Date(stats.account_created);
+            document.getElementById('accountCreated').textContent = createdDate.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+
+        // Show modal
+        document.getElementById('userProfileModal').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error loading user stats:', error);
+        showAlert('Failed to load user statistics', 'error');
+    }
+}
+
+// Hide user profile modal
+function hideUserProfile() {
+    document.getElementById('userProfileModal').classList.add('hidden');
+}
+
+// Show about modal
+function showAboutModal() {
+    document.getElementById('aboutModal').classList.remove('hidden');
+}
+
+// Hide about modal
+function hideAboutModal() {
+    document.getElementById('aboutModal').classList.add('hidden');
+}
+
+// Export data function - generates PDF report
+async function exportData() {
+    try {
+        showAlert('Preparing PDF export...', 'info');
+
+        // Fetch all user data
+        const [expenses, income, habits, habitLogs, stats] = await Promise.all([
+            apiCall('/api/expenses/all'),
+            apiCall('/api/income/all'),
+            apiCall('/api/habits'),
+            apiCall('/api/habits/log/all'),
+            apiCall('/api/stats/all-time')
+        ]);
+
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        let yPos = 20;
+        const pageWidth = doc.internal.pageSize.width;
+        const marginLeft = 15;
+        const marginRight = 15;
+        const contentWidth = pageWidth - marginLeft - marginRight;
+
+        // Header
+        doc.setFontSize(22);
+        doc.setTextColor(37, 99, 235); // Professional blue
+        doc.text('FinHabits Data Export', pageWidth / 2, yPos, { align: 'center' });
+
+        yPos += 10;
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, yPos, { align: 'center' });
+
+        yPos += 15;
+
+        // Summary Statistics
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Summary', marginLeft, yPos);
+        yPos += 8;
+
+        doc.setFontSize(10);
+        doc.setTextColor(60, 60, 60);
+        const summaryData = [
+            `Total Expenses: ₹${(stats.total_expenses || 0).toFixed(2)}`,
+            `Total Income: ₹${(stats.total_income || 0).toFixed(2)}`,
+            `Net Savings: ₹${((stats.total_income || 0) - (stats.total_expenses || 0)).toFixed(2)}`,
+            `Habits Tracked: ${stats.total_habit_logs || 0}`,
+            `Current Streak: ${stats.current_streak || 0} days`
+        ];
+
+        summaryData.forEach(line => {
+            doc.text(line, marginLeft + 5, yPos);
+            yPos += 6;
+        });
+
+        yPos += 10;
+
+        // Expenses Section
+        if (expenses && expenses.length > 0) {
+            doc.setFontSize(14);
+            doc.setTextColor(220, 38, 38); // Red for expenses
+            doc.text('Expenses', marginLeft, yPos);
+            yPos += 8;
+
+            doc.setFontSize(9);
+            doc.setTextColor(0, 0, 0);
+
+            // Table header
+            doc.setFont(undefined, 'bold');
+            doc.text('Date', marginLeft, yPos);
+            doc.text('Category', marginLeft + 30, yPos);
+            doc.text('Description', marginLeft + 60, yPos);
+            doc.text('Amount', marginLeft + 130, yPos);
+            yPos += 5;
+
+            doc.setFont(undefined, 'normal');
+
+            // Expenses data
+            expenses.slice(0, 50).forEach(exp => {
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.text(exp.date || '', marginLeft, yPos);
+                doc.text((exp.category || '').substring(0, 12), marginLeft + 30, yPos);
+                doc.text((exp.description || '').substring(0, 30), marginLeft + 60, yPos);
+                doc.text(`₹${parseFloat(exp.amount).toFixed(2)}`, marginLeft + 130, yPos);
+                yPos += 5;
+            });
+
+            if (expenses.length > 50) {
+                doc.setFont(undefined, 'italic');
+                doc.text(`... and ${expenses.length - 50} more expenses`, marginLeft, yPos);
+                yPos += 5;
+                doc.setFont(undefined, 'normal');
+            }
+
+            yPos += 5;
+        }
+
+        // Income Section
+        if (income && income.length > 0) {
+            if (yPos > 200) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(14);
+            doc.setTextColor(34, 197, 94); // Green for income
+            doc.text('Income', marginLeft, yPos);
+            yPos += 8;
+
+            doc.setFontSize(9);
+            doc.setTextColor(0, 0, 0);
+
+            // Table header
+            doc.setFont(undefined, 'bold');
+            doc.text('Date', marginLeft, yPos);
+            doc.text('Source', marginLeft + 30, yPos);
+            doc.text('Amount', marginLeft + 130, yPos);
+            yPos += 5;
+
+            doc.setFont(undefined, 'normal');
+
+            // Income data
+            income.slice(0, 50).forEach(inc => {
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.text(inc.date || '', marginLeft, yPos);
+                doc.text((inc.source || '').substring(0, 40), marginLeft + 30, yPos);
+                doc.text(`₹${parseFloat(inc.amount).toFixed(2)}`, marginLeft + 130, yPos);
+                yPos += 5;
+            });
+
+            if (income.length > 50) {
+                doc.setFont(undefined, 'italic');
+                doc.text(`... and ${income.length - 50} more income entries`, marginLeft, yPos);
+                yPos += 5;
+                doc.setFont(undefined, 'normal');
+            }
+
+            yPos += 5;
+        }
+
+        // Habits Section
+        if (habitLogs && habitLogs.length > 0) {
+            if (yPos > 200) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(14);
+            doc.setTextColor(37, 99, 235); // Blue for habits
+            doc.text('Habits Tracked', marginLeft, yPos);
+            yPos += 8;
+
+            doc.setFontSize(9);
+            doc.setTextColor(0, 0, 0);
+
+            // Table header
+            doc.setFont(undefined, 'bold');
+            doc.text('Date', marginLeft, yPos);
+            doc.text('Habit', marginLeft + 30, yPos);
+            doc.text('Duration', marginLeft + 80, yPos);
+            doc.text('Topic', marginLeft + 110, yPos);
+            yPos += 5;
+
+            doc.setFont(undefined, 'normal');
+
+            // Habits data
+            habitLogs.slice(0, 50).forEach(log => {
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.text(log.date || '', marginLeft, yPos);
+                doc.text((log.name || '').substring(0, 20), marginLeft + 30, yPos);
+
+                const duration = log.duration_minutes ? `${Math.floor(log.duration_minutes / 60)}h ${log.duration_minutes % 60}m` : '-';
+                doc.text(duration, marginLeft + 80, yPos);
+                doc.text((log.topic || '-').substring(0, 25), marginLeft + 110, yPos);
+                yPos += 5;
+            });
+
+            if (habitLogs.length > 50) {
+                doc.setFont(undefined, 'italic');
+                doc.text(`... and ${habitLogs.length - 50} more habit logs`, marginLeft, yPos);
+                doc.setFont(undefined, 'normal');
+            }
+        }
+
+        // Footer on last page
+        const totalPages = doc.internal.pages.length - 1;
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, 285, { align: 'center' });
+            doc.text('FinHabits - Transform Your Financial Future', pageWidth / 2, 290, { align: 'center' });
+        }
+
+        // Save the PDF
+        const filename = `finhabits-report-${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+
+        showAlert('PDF report downloaded successfully! 📄', 'success');
+    } catch (error) {
+        console.error('Error exporting data:', error);
+        showAlert('Failed to export PDF report', 'error');
+    }
+}
+
+// Close modals when clicking outside
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'userProfileModal') {
+        hideUserProfile();
+    }
+    if (e.target.id === 'aboutModal') {
+        hideAboutModal();
+    }
+});

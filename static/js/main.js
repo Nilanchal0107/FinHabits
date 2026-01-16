@@ -210,4 +210,43 @@ document.addEventListener('DOMContentLoaded', () => {
         themeBtn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
         themeBtn.addEventListener('click', toggleTheme);
     }
+
+    // Set up sidebar theme toggle
+    const sidebarThemeBtn = document.getElementById('sidebarThemeToggle');
+    if (sidebarThemeBtn) {
+        sidebarThemeBtn.addEventListener('click', toggleTheme);
+    }
+
+    // Sidebar toggle functionality
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const closeSidebar = document.getElementById('closeSidebar');
+
+    if (menuToggle && sidebarOverlay) {
+        // Open sidebar
+        menuToggle.addEventListener('click', () => {
+            sidebarOverlay.classList.add('active');
+        });
+
+        // Close sidebar
+        if (closeSidebar) {
+            closeSidebar.addEventListener('click', () => {
+                sidebarOverlay.classList.remove('active');
+            });
+        }
+
+        // Close sidebar when clicking overlay
+        sidebarOverlay.addEventListener('click', (e) => {
+            if (e.target === sidebarOverlay) {
+                sidebarOverlay.classList.remove('active');
+            }
+        });
+
+        // Close sidebar when pressing Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOverlay.classList.contains('active')) {
+                sidebarOverlay.classList.remove('active');
+            }
+        });
+    }
 });

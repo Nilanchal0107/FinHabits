@@ -24,22 +24,17 @@
     --text-muted: #9ca3af;
     --text-inverse: #111827;
 
-    /* Professional Muted Gradients */
-    --gradient-primary: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    /* Professional Minimal Gradients */
+    --gradient-primary: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
     --gradient-success: linear-gradient(135deg, #059669 0%, #047857 100%);
     --gradient-warning: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    --gradient-purple: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
-    --gradient-blue: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    --gradient-pink: linear-gradient(135deg, #db2777 0%, #be185d 100%);
-    --gradient-ocean: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-    --gradient-fire: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    --gradient-aurora: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+    --gradient-danger: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
 
-    /* Mesh Background */
-    --mesh-bg-1: radial-gradient(at 40% 20%, hsla(250, 70%, 30%, 0.3) 0px, transparent 50%);
-    --mesh-bg-2: radial-gradient(at 80% 0%, hsla(280, 70%, 30%, 0.3) 0px, transparent 50%);
-    --mesh-bg-3: radial-gradient(at 0% 50%, hsla(220, 70%, 30%, 0.3) 0px, transparent 50%);
-    --mesh-bg-4: radial-gradient(at 80% 100%, hsla(200, 70%, 30%, 0.3) 0px, transparent 50%);
+    /* Subtle Mesh Background */
+    --mesh-bg-1: radial-gradient(at 40% 20%, hsla(220, 40%, 25%, 0.15) 0px, transparent 50%);
+    --mesh-bg-2: radial-gradient(at 80% 0%, hsla(220, 40%, 25%, 0.15) 0px, transparent 50%);
+    --mesh-bg-3: radial-gradient(at 0% 50%, hsla(220, 40%, 25%, 0.15) 0px, transparent 50%);
+    --mesh-bg-4: radial-gradient(at 80% 100%, hsla(220, 40%, 25%, 0.15) 0px, transparent 50%);
 
     /* Professional Semantic Colors */
     --success: #059669;
@@ -51,10 +46,10 @@
     --info: #2563eb;
     --info-light: #3b82f6;
 
-    /* Professional Accent Colors */
-    --accent-primary: #6366f1;
-    --accent-secondary: #8b5cf6;
-    --accent-tertiary: #0891b2;
+    /* Professional Accent Colors - Focused Blue Palette */
+    --accent-primary: #2563eb;
+    --accent-secondary: #1e40af;
+    --accent-tertiary: #1d4ed8;
 
     /* Borders & Shadows */
     --border-color: rgba(255, 255, 255, 0.08);
@@ -63,7 +58,7 @@
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
     --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
     --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.3);
-    --shadow-glow: 0 0 24px rgba(139, 92, 246, 0.4);
+    --shadow-glow: 0 0 24px rgba(37, 99, 235, 0.3);
 
     /* Spacing */
     --space-xs: 0.25rem;
@@ -272,8 +267,9 @@ a:hover {
     border-bottom: 1px solid var(--glass-border);
     padding: var(--space-md) var(--space-xl);
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: var(--space-xl);
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-base);
 }
@@ -281,7 +277,7 @@ a:hover {
 .navbar-brand {
     font-size: 1.5rem;
     font-weight: 800;
-    background: var(--gradient-aurora);
+    background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -399,7 +395,7 @@ a:hover {
 }
 
 .btn-danger {
-    background: var(--gradient-fire);
+    background: var(--gradient-danger);
     color: white;
 }
 
@@ -538,7 +534,7 @@ a:hover {
 .form-textarea:focus {
     outline: none;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1), var(--shadow-md);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), var(--shadow-md);
     background: var(--bg-elevated);
     transform: translateY(-2px);
 }
@@ -566,14 +562,14 @@ a:hover {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--gradient-aurora);
+    background: var(--gradient-primary);
     opacity: 0.05;
     /* Removed pulse animation */
 }
 
 .hero h1 {
     font-size: clamp(3rem, 8vw, 5.5rem);
-    background: var(--gradient-aurora);
+    background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -707,28 +703,33 @@ a:hover {
 }
 
 .category-food {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    color: #92400e;
+    background: rgba(217, 119, 6, 0.15);
+    color: #d97706;
+    border: 1px solid rgba(217, 119, 6, 0.3);
 }
 
 .category-transport {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    color: #1e40af;
+    background: rgba(37, 99, 235, 0.15);
+    color: #2563eb;
+    border: 1px solid rgba(37, 99, 235, 0.3);
 }
 
 .category-education {
-    background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
-    color: #831843;
+    background: rgba(5, 150, 105, 0.15);
+    color: #059669;
+    border: 1px solid rgba(5, 150, 105, 0.3);
 }
 
 .category-entertainment {
-    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-    color: #3730a3;
+    background: rgba(37, 99, 235, 0.12);
+    color: #1e40af;
+    border: 1px solid rgba(37, 99, 235, 0.25);
 }
 
 .category-others {
-    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-    color: #1f2937;
+    background: rgba(107, 114, 128, 0.15);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
 }
 
 /* ============================================
@@ -736,7 +737,7 @@ a:hover {
    ============================================ */
 
 .streak-badge {
-    background: var(--gradient-fire);
+    background: var(--gradient-warning);
     color: white;
     padding: var(--space-sm) var(--space-lg);
     border-radius: var(--radius-full);
@@ -744,7 +745,7 @@ a:hover {
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
-    box-shadow: var(--shadow-lg), 0 0 20px rgba(245, 158, 11, 0.4);
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(217, 119, 6, 0.3);
     animation: pulse-glow 2s ease-in-out infinite;
 }
 
@@ -752,11 +753,11 @@ a:hover {
 
     0%,
     100% {
-        box-shadow: var(--shadow-lg), 0 0 20px rgba(245, 158, 11, 0.4);
+        box-shadow: var(--shadow-lg), 0 0 20px rgba(217, 119, 6, 0.3);
     }
 
     50% {
-        box-shadow: var(--shadow-xl), 0 0 30px rgba(245, 158, 11, 0.6);
+        box-shadow: var(--shadow-xl), 0 0 30px rgba(217, 119, 6, 0.5);
     }
 }
 
@@ -824,7 +825,7 @@ a:hover {
 
 .calendar-day.today {
     border: 2px solid var(--accent-primary);
-    background: rgba(139, 92, 246, 0.1);
+    background: rgba(37, 99, 235, 0.1);
     box-shadow: var(--shadow-glow);
 }
 
@@ -1069,7 +1070,7 @@ a:hover {
 }
 
 .gradient-text {
-    background: var(--gradient-aurora);
+    background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
