@@ -249,6 +249,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Setup modal close on outside click
+    const userProfileModal = document.getElementById('userProfileModal');
+    const aboutModal = document.getElementById('aboutModal');
+
+    if (userProfileModal) {
+        userProfileModal.addEventListener('click', (e) => {
+            if (e.target === userProfileModal) {
+                hideUserProfile();
+            }
+        });
+    }
+
+    if (aboutModal) {
+        aboutModal.addEventListener('click', (e) => {
+            if (e.target === aboutModal) {
+                hideAboutModal();
+            }
+        });
+    }
 });
 
 // ==================== MODAL FUNCTIONS (GLOBAL) ====================

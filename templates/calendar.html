@@ -173,16 +173,203 @@
             </div>
         </div>
 
-        <!-- Quick Nav -->
-        <div class="grid grid-2 mt-4">
-            <a href="/dashboard" class="btn btn-secondary w-full">
-                <span>←</span>
-                <span>Back to Dashboard</span>
-            </a>
-            <a href="/insights" class="btn btn-primary w-full">
-                <span>View AI Insights</span>
-                <span>→</span>
-            </a>
+    </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="userProfileModal" class="modal hidden">
+        <div class="modal-content card"
+            style="max-width: 950px; width: 92%; margin: 2rem auto; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 class="card-title" style="margin: 0;">👤 User Profile</h3>
+                <button onclick="hideUserProfile()" class="btn-icon" style="font-size: 1.5rem;">✕</button>
+            </div>
+
+            <!-- User Info Header -->
+            <div
+                style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: var(--gradient-primary); border-radius: var(--radius-lg); color: white;">
+                <div style="font-size: 4rem; margin-bottom: 0.5rem;">👤</div>
+                <h2 style="margin: 0; font-size: 2rem; color: white;">{{ username }}</h2>
+                <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Financial Habits Tracker</p>
+            </div>
+
+            <!-- User Stats - 3x2 Grid -->
+            <div style="margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">📊 Statistics
+                </h4>
+                <div class="grid grid-3" style="gap: 1rem;">
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Total
+                            Expenses</div>
+                        <div id="totalExpenses" style="font-size: 1.5rem; font-weight: 700; color: var(--danger);">₹0
+                        </div>
+                    </div>
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Total Income
+                        </div>
+                        <div id="totalIncome" style="font-size: 1.5rem; font-weight: 700; color: var(--success);">₹0
+                        </div>
+                    </div>
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Net Savings
+                        </div>
+                        <div id="netSavings" style="font-size: 1.5rem; font-weight: 700; color: var(--info);">₹0
+                        </div>
+                    </div>
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Habits
+                            Tracked</div>
+                        <div id="totalHabits"
+                            style="font-size: 1.5rem; font-weight: 700; color: var(--accent-primary);">0</div>
+                    </div>
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Current
+                            Streak</div>
+                        <div id="currentStreak" style="font-size: 1.5rem; font-weight: 700;">🔥 0 days</div>
+                    </div>
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Days Active
+                        </div>
+                        <div id="daysActive" style="font-size: 1.5rem; font-weight: 700; color: var(--warning);">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Insights -->
+            <div style="margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">💡 Financial Insights
+                </h4>
+                <div class="grid grid-2" style="gap: 1rem;">
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Avg. Daily
+                            Spending</div>
+                        <div id="avgDailySpending" style="font-size: 1.25rem; font-weight: 600;">₹0</div>
+                    </div>
+                    <div
+                        style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Top Spending
+                            Category</div>
+                        <div id="topCategory" style="font-size: 1.25rem; font-weight: 600;">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Info -->
+            <div
+                style="padding: 1rem; background: var(--glass-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.875rem; color: var(--text-muted);">Member Since</div>
+                <div id="accountCreated" style="font-size: 1rem; font-weight: 600; margin-top: 0.25rem;">Loading...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About FinHabits Modal -->
+    <div id="aboutModal" class="modal hidden">
+        <div class="modal-content card"
+            style="max-width: 700px; margin: 2rem auto; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 class="card-title" style="margin: 0;">ℹ️ About FinHabits</h3>
+                <button onclick="hideAboutModal()" class="btn-icon" style="font-size: 1.5rem;">✕</button>
+            </div>
+
+            <!-- App Description -->
+            <div
+                style="padding: 1.5rem; background: var(--glass-bg); border-radius: var(--radius-lg); border: 1px solid var(--border-color); margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 0.5rem; color: var(--accent-primary);">💰 Transform Your Financial Future</h4>
+                <p style="color: var(--text-secondary); line-height: 1.7; margin: 0;">
+                    FinHabits helps you understand the connection between your daily habits and spending patterns.
+                    Track expenses, manage income, build positive habits, and get AI-powered insights to make smarter
+                    financial decisions.
+                </p>
+            </div>
+
+            <!-- Features Guide -->
+            <div>
+                <h4 style="margin-bottom: 1.5rem; color: var(--text-primary); font-size: 1.2rem;">📚 How to Use
+                    FinHabits</h4>
+
+                <!-- Finance Tracker -->
+                <div
+                    style="margin-bottom: 2rem; padding: 1.5rem; background: var(--glass-bg); border-radius: var(--radius-lg); border-left: 4px solid var(--accent-primary);">
+                    <h5 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.5rem;">💰</span>
+                        <span>Finance Tracker</span>
+                    </h5>
+                    <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); line-height: 1.8;">
+                        <li>Select a date to track your finances</li>
+                        <li>Click <strong>"Add Expense"</strong> to record spending (Food, Transport, Education, etc.)
+                        </li>
+                        <li>Click <strong>"Add Income"</strong> to log money received</li>
+                        <li>View daily and monthly expense summaries</li>
+                        <li>Edit or delete entries anytime</li>
+                    </ul>
+                </div>
+
+                <!-- Habit Tracker -->
+                <div
+                    style="margin-bottom: 2rem; padding: 1.5rem; background: var(--glass-bg); border-radius: var(--radius-lg); border-left: 4px solid var(--success);">
+                    <h5 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.5rem;">✅</span>
+                        <span>Habit Tracker</span>
+                    </h5>
+                    <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); line-height: 1.8;">
+                        <li>Select a date to track your habits</li>
+                        <li>Click <strong>"Track Habits"</strong> to mark daily habits complete</li>
+                        <li>Add duration, topics, and tasks completed</li>
+                        <li>Create custom habits for personal goals</li>
+                        <li>Build streaks by tracking consistently</li>
+                    </ul>
+                </div>
+
+                <!-- Calendar View -->
+                <div
+                    style="margin-bottom: 2rem; padding: 1.5rem; background: var(--glass-bg); border-radius: var(--radius-lg); border-left: 4px solid var(--warning);">
+                    <h5 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.5rem;">📅</span>
+                        <span>Calendar View</span>
+                    </h5>
+                    <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); line-height: 1.8;">
+                        <li>See your entire month's expenses and habits</li>
+                        <li>Spot spending patterns and trends visually</li>
+                        <li>Track your daily progress</li>
+                        <li>Navigate between months easily</li>
+                    </ul>
+                </div>
+
+                <!-- AI Insights -->
+                <div
+                    style="padding: 1.5rem; background: var(--glass-bg); border-radius: var(--radius-lg); border-left: 4px solid var(--info);">
+                    <h5 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.5rem;">🤖</span>
+                        <span>AI Insights</span>
+                    </h5>
+                    <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); line-height: 1.8;">
+                        <li>Get personalized monthly financial summaries</li>
+                        <li>Receive spending comparisons and trend analysis</li>
+                        <li>Get AI-powered advice on saving money</li>
+                        <li>Understand your spending patterns better</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div
+                style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: center;">
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">
+                    Built with ❤️ for students learning to manage their finances
+                </p>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem;">
+                    Free • AI-Powered • Easy to Use
+                </p>
+            </div>
         </div>
     </div>
 
