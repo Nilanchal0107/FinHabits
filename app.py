@@ -157,10 +157,10 @@ def chatbot():
         })
     
     try:
-        # Fetch user's financial data (last 3 months)
+        # Fetch user's financial data (last 30 days) - Optimized for speed
         today = datetime.now()
-        three_months_ago = today - timedelta(days=90)
-        date_filter = three_months_ago.strftime('%Y-%m-%d')
+        one_month_ago = today - timedelta(days=30)
+        date_filter = one_month_ago.strftime('%Y-%m-%d')
         
         with get_db() as conn:
             # Get expenses
@@ -228,7 +228,8 @@ HABITS:
 
 Current Date: {today.strftime('%Y-%m-%d')}
 
-Based on this data, answer the user's question with specific, personalized advice. Use actual numbers from their data. Be friendly, supportive, and actionable.
+Based on this data, answer the user's question with specific, personalized advice. Use actual numbers from their data.
+CRITICAL: Keep your response concise, strictly between 50 to 80 words. Be friendly, supportive, and actionable.
 
 User's Question: {user_message}
 
