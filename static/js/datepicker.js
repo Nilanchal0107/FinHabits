@@ -31,26 +31,26 @@ class CustomDatePicker {
     createPicker() {
         // Create modal overlay
         const modal = document.createElement('div');
-        modal.id = 'customDatePickerModal';
+        modal.id = `customDatePickerModal_${this.inputElement.id}`;
         modal.className = 'date-picker-modal hidden';
         modal.innerHTML = `
-            <div class="date-picker-overlay" onclick="datePicker.close()"></div>
+            <div class="date-picker-overlay"></div>
             <div class="date-picker-container">
                 <div class="date-picker-header">
-                    <button type="button" class="date-nav-btn" onclick="datePicker.previousMonth()">
+                    <button type="button" class="date-nav-btn prev-month-btn">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
                         </svg>
                     </button>
                     <div class="date-picker-title">
-                        <select id="monthSelect" class="date-picker-select" onchange="datePicker.changeMonth(this.value)">
+                        <select class="date-picker-select month-select">
                             ${this.getMonthOptions()}
                         </select>
-                        <select id="yearSelect" class="date-picker-select" onchange="datePicker.changeYear(this.value)">
+                        <select class="date-picker-select year-select">
                             ${this.getYearOptions()}
                         </select>
                     </div>
-                    <button type="button" class="date-nav-btn" onclick="datePicker.nextMonth()">
+                    <button type="button" class="date-nav-btn next-month-btn">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
                         </svg>
@@ -60,19 +60,28 @@ class CustomDatePicker {
                     <div class="calendar-weekdays">
                         <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
                     </div>
-                    <div class="calendar-days" id="calendarDays">
+                    <div class="calendar-days" id="calendarDays_${this.inputElement.id}">
                         <!-- Days populated by JavaScript -->
                     </div>
                 </div>
                 <div class="date-picker-footer">
-                    <button type="button" class="btn-text" onclick="datePicker.clear()">Clear</button>
-                    <button type="button" class="btn-primary-small" onclick="datePicker.today()">Today</button>
+                    <button type="button" class="btn-text clear-btn">Clear</button>
+                    <button type="button" class="btn-primary-small today-btn">Today</button>
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
         this.modal = modal;
+
+        // Add event listeners
+        this.modal.querySelector('.date-picker-overlay').addEventListener('click', () => this.close());
+        this.modal.querySelector('.prev-month-btn').addEventListener('click', () => this.previousMonth());
+        this.modal.querySelector('.next-month-btn').addEventListener('click', () => this.nextMonth());
+        this.modal.querySelector('.month-select').addEventListener('change', (e) => this.changeMonth(e.target.value));
+        this.modal.querySelector('.year-select').addEventListener('change', (e) => this.changeYear(e.target.value));
+        this.modal.querySelector('.clear-btn').addEventListener('click', () => this.clear());
+        this.modal.querySelector('.today-btn').addEventListener('click', () => this.today());
     }
 
     getMonthOptions() {
@@ -98,8 +107,8 @@ class CustomDatePicker {
         this.renderCalendar();
 
         // Update selects
-        document.getElementById('monthSelect').value = this.currentMonth;
-        document.getElementById('yearSelect').value = this.currentYear;
+        this.modal.querySelector('.month-select').value = this.currentMonth;
+        this.modal.querySelector('.year-select').value = this.currentYear;
     }
 
     close() {
@@ -108,7 +117,13 @@ class CustomDatePicker {
     }
 
     renderCalendar() {
-        const daysContainer = document.getElementById('calendarDays');
+        // Update header selects
+        if (this.modal) {
+            this.modal.querySelector('.month-select').value = this.currentMonth;
+            this.modal.querySelector('.year-select').value = this.currentYear;
+        }
+
+        const daysContainer = document.getElementById(`calendarDays_${this.inputElement.id}`);
         daysContainer.innerHTML = '';
 
         const firstDay = new Date(this.currentYear, this.currentMonth, 1);
@@ -126,7 +141,10 @@ class CustomDatePicker {
 
         // Previous month days
         for (let x = firstDayIndex; x > 0; x--) {
-            daysContainer.innerHTML += `<div class="calendar-day prev-month">${prevLastDayDate - x + 1}</div>`;
+            const dayEl = document.createElement('div');
+            dayEl.className = 'calendar-day prev-month';
+            dayEl.textContent = prevLastDayDate - x + 1;
+            daysContainer.appendChild(dayEl);
         }
 
         // Current month days
@@ -150,15 +168,25 @@ class CustomDatePicker {
             if (isSelected) classes.push('selected');
             if (isFuture) classes.push('future-date');
 
-            // Don't add onclick for future dates
-            const onclick = isFuture ? '' : `onclick="datePicker.selectDate(${i})"`;
+            // Create element with click handler
+            const dayEl = document.createElement('div');
+            dayEl.className = classes.join(' ');
+            dayEl.textContent = i;
 
-            daysContainer.innerHTML += `<div class="${classes.join(' ')}" ${onclick}>${i}</div>`;
+            if (!isFuture) {
+                dayEl.style.cursor = 'pointer';
+                dayEl.addEventListener('click', () => this.selectDate(i));
+            }
+
+            daysContainer.appendChild(dayEl);
         }
 
         // Next month days
         for (let j = 1; j <= nextDays; j++) {
-            daysContainer.innerHTML += `<div class="calendar-day next-month">${j}</div>`;
+            const dayEl = document.createElement('div');
+            dayEl.className = 'calendar-day next-month';
+            dayEl.textContent = j;
+            daysContainer.appendChild(dayEl);
         }
     }
 
@@ -202,8 +230,6 @@ class CustomDatePicker {
             this.currentYear--;
         }
         this.renderCalendar();
-        document.getElementById('monthSelect').value = this.currentMonth;
-        document.getElementById('yearSelect').value = this.currentYear;
     }
 
     nextMonth() {
@@ -213,8 +239,6 @@ class CustomDatePicker {
             this.currentYear++;
         }
         this.renderCalendar();
-        document.getElementById('monthSelect').value = this.currentMonth;
-        document.getElementById('yearSelect').value = this.currentYear;
     }
 
     changeMonth(month) {
@@ -243,10 +267,17 @@ class CustomDatePicker {
 
 // Global instance
 let datePicker;
+let datePickerHabits;
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function () {
+    // Finance tab date picker
     if (document.getElementById('selectedDate')) {
         datePicker = new CustomDatePicker('selectedDate');
+    }
+
+    // Habits tab date picker
+    if (document.getElementById('selectedDateHabits')) {
+        datePickerHabits = new CustomDatePicker('selectedDateHabits');
     }
 });

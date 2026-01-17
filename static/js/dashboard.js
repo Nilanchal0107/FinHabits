@@ -119,11 +119,13 @@ function handleDateSelection(e) {
 
 // Handle date selection for Habits tab
 function handleDateSelectionHabits(e) {
-    const dateValue = e.target.value;
-    if (!dateValue) return;
+    const dateValue = e.target.value; // DD-MM-YYYY format
+    const isoDate = e.target.getAttribute('data-iso-date'); // YYYY-MM-DD format
+
+    if (!dateValue || !isoDate) return;
 
     // Validate not future date
-    const selected = new Date(dateValue + 'T00:00:00');
+    const selected = new Date(isoDate + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -133,10 +135,10 @@ function handleDateSelectionHabits(e) {
         return;
     }
 
-    selectedDate = dateValue;
+    selectedDate = isoDate; // Use ISO format for API calls
 
     // Update UI - Format as dd/mm/yyyy
-    const displayDate = new Date(dateValue + 'T00:00:00').toLocaleDateString('en-GB', {
+    const displayDate = new Date(isoDate + 'T00:00:00').toLocaleDateString('en-GB', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -147,7 +149,7 @@ function handleDateSelectionHabits(e) {
     document.getElementById('actionSelectorHabits').classList.remove('hidden');
 
     // Load habit data for selected date  
-    loadHabitDataForDate(dateValue);
+    loadHabitDataForDate(isoDate); // Pass ISO format
 }
 
 // Load habit data for the Habits tab
