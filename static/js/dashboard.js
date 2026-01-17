@@ -49,36 +49,48 @@ function setupCalendarWidget() {
     const dateInputHabits = document.getElementById('selectedDateHabits');
     const today = formatDate(currentDate);
 
-    // Set default value to today for both date inputs
-    dateInput.value = today;
-    dateInputHabits.value = today;
+    // Don't set initial value - let custom date picker handle it
+    // dateInput.value = today;
+    // dateInputHabits.value = today;
 
     // Set max date to today (prevent future dates)
     dateInput.max = today;
     dateInputHabits.max = today;
 
-    // Automatically trigger date selection for today
-    handleDateSelection({ target: dateInput });
+    // Wait for custom date picker to initialize before triggering selection
+    setTimeout(() => {
+        handleDateSelection({ target: dateInput });
+    }, 100);
 
     // Date change handlers - sync between tabs
     dateInput.addEventListener('change', (e) => {
-        dateInputHabits.value = e.target.value;
+        const isoDate = e.target.getAttribute('data-iso-date');
+        if (isoDate) {
+            dateInputHabits.value = e.target.value;
+            dateInputHabits.setAttribute('data-iso-date', isoDate);
+        }
         handleDateSelection(e);
     });
 
     dateInputHabits.addEventListener('change', (e) => {
-        dateInput.value = e.target.value;
+        const isoDate = e.target.getAttribute('data-iso-date');
+        if (isoDate) {
+            dateInput.value = e.target.value;
+            dateInput.setAttribute('data-iso-date', isoDate);
+        }
         handleDateSelectionHabits(e);
     });
 }
 
 // Handle date selection
 function handleDateSelection(e) {
-    const dateValue = e.target.value;
-    if (!dateValue) return;
+    const dateValue = e.target.value; // DD-MM-YYYY format
+    const isoDate = e.target.getAttribute('data-iso-date'); // YYYY-MM-DD format
+
+    if (!dateValue || !isoDate) return;
 
     // Validate not future date
-    const selected = new Date(dateValue + 'T00:00:00');
+    const selected = new Date(isoDate + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -88,10 +100,10 @@ function handleDateSelection(e) {
         return;
     }
 
-    selectedDate = dateValue;
+    selectedDate = isoDate; // Store in YYYY-MM-DD format for API calls
 
-    // Update UI - Format as dd/mm/yyyy
-    const displayDate = new Date(dateValue + 'T00:00:00').toLocaleDateString('en-GB', {
+    // Update UI - Format display
+    const displayDate = new Date(isoDate + 'T00:00:00').toLocaleDateString('en-GB', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -102,7 +114,7 @@ function handleDateSelection(e) {
     document.getElementById('actionSelector').classList.remove('hidden');
 
     // Load data for selected date
-    loadDataForDate(dateValue);
+    loadDataForDate(isoDate);
 }
 
 // Handle date selection for Habits tab

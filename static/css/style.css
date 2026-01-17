@@ -961,6 +961,91 @@ a:hover {
     text-align: center;
 }
 
+/* Future dates styling - barely visible */
+.future-date .calendar-day-number {
+    opacity: 0.1 !important;
+}
+
+.future-date {
+    pointer-events: none;
+    cursor: default !important;
+}
+
+.future-date:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ============================================
+   CUSTOM DATE PICKER STYLING
+   ============================================ */
+
+/* Style the date input to match dark theme */
+input[type="date"] {
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--text-primary);
+    padding: 0.875rem 1rem;
+    border-radius: var(--radius-lg);
+    transition: all 0.3s ease;
+}
+
+input[type="date"]:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+input[type="date"]:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+/* Style the calendar icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 4px;
+    filter: invert(0.8);
+    transition: all 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    background: rgba(96, 165, 250, 0.2);
+    filter: invert(1);
+}
+
+/* Date field editing states */
+input[type="date"]::-webkit-datetime-edit {
+    color: var(--text-primary);
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+    color: var(--text-muted);
+    padding: 0 0.25rem;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+    color: var(--text-primary);
+    padding: 0.25rem;
+    border-radius: 4px;
+    background: transparent;
+    transition: background 0.2s ease;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field:focus,
+input[type="date"]::-webkit-datetime-edit-day-field:focus,
+input[type="date"]::-webkit-datetime-edit-year-field:focus {
+    background: rgba(96, 165, 250, 0.15);
+    outline: none;
+}
+
 /* ============================================
    HIDE BROWSER DEFAULT STYLES (Requested UI Refinement)
    ============================================ */

@@ -59,8 +59,13 @@ async function renderCalendar(year, month) {
 
         // Add days
         const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to start of day
+
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            const currentDate = new Date(year, month - 1, day);
+            currentDate.setHours(0, 0, 0, 0);
+
             const dayCell = document.createElement('div');
             dayCell.className = 'calendar-day';
             dayCell.style.animation = `fadeIn 0.5s ease-out ${(day * 0.02)}s backwards`;
@@ -72,6 +77,11 @@ async function renderCalendar(year, month) {
                 dayCell.classList.add('today');
                 dayCell.style.border = '2px solid var(--accent-primary)';
                 dayCell.style.background = 'rgba(139, 92, 246, 0.1)';
+            }
+
+            // Check if future date
+            if (currentDate > today) {
+                dayCell.classList.add('future-date');
             }
 
             // Day number
@@ -102,18 +112,20 @@ async function renderCalendar(year, month) {
                 dayCell.appendChild(habitInfo);
             }
 
-            // Click to view details
-            dayCell.onclick = () => viewDayDetails(dateStr);
+            // Click to view details (disable for future dates)
+            if (currentDate <= today) {
+                dayCell.onclick = () => viewDayDetails(dateStr);
 
-            // Hover effect
-            dayCell.addEventListener('mouseenter', () => {
-                dayCell.style.transform = 'translateY(-5px)';
-                dayCell.style.boxShadow = 'var(--shadow-lg)';
-            });
-            dayCell.addEventListener('mouseleave', () => {
-                dayCell.style.transform = 'translateY(0)';
-                dayCell.style.boxShadow = 'none';
-            });
+                // Hover effect (only for past/today)
+                dayCell.addEventListener('mouseenter', () => {
+                    dayCell.style.transform = 'translateY(-5px)';
+                    dayCell.style.boxShadow = 'var(--shadow-lg)';
+                });
+                dayCell.addEventListener('mouseleave', () => {
+                    dayCell.style.transform = 'translateY(0)';
+                    dayCell.style.boxShadow = 'none';
+                });
+            }
 
             grid.appendChild(dayCell);
         }
