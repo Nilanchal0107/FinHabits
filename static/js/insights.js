@@ -438,9 +438,9 @@ function addMessageToChat(message, sender, isRelevant = true) {
 
     // Convert markdown to HTML for better formatting
     let formattedMessage = message
-        // Bold: **text** -> <strong>text</strong>
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        // Italic: *text* -> <em>text</em>
+        // Bold: **text** (allow optional spaces)
+        .replace(/\*\*\s*([^*]+?)\s*\*\*/g, '<strong>$1</strong>')
+        // Italic: *text*
         .replace(/\*([^*]+)\*/g, '<em>$1</em>')
         // Line breaks
         .replace(/\n/g, '<br>');
