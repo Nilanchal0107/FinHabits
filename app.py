@@ -139,66 +139,120 @@ def insights_page():
 
 @app.route('/api/chatbot', methods=['POST'])
 def chatbot():
-    """Simple financial advisor chatbot endpoint"""
+    """Context-aware financial advisor chatbot"""
     if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_id = session['user_id']
+    data = request.json
+    user_message = data.get('message', '').strip()
+    
+    if not user_message:
+        return jsonify({'error': 'Message is required'}), 400
+    
+    if not GEMINI_API_KEY:
+        return jsonify({
+            'response': "I'm sorry, but AI features are not configured. Please set up your GEMINI_API_KEY to enable personalized financial advice.",
+            'is_relevant': False
+        })
     
     try:
-        data = request.get_json()
-        user_message = data.get('message', '').strip()
+        # Fetch user's financial data (last 3 months)
+        today = datetime.now()
+        three_months_ago = today - timedelta(days=90)
+        date_filter = three_months_ago.strftime('%Y-%m-%d')
         
-        if not user_message:
-            return jsonify({'error': 'No message provided'}), 400
-        
-        # Check if GEMINI_API_KEY is configured
-        if not GEMINI_API_KEY:
-            return jsonify({'error': 'AI service not configured'}), 500
-        
-        # Financial topic filtering
-        financial_keywords = [
-            'budget', 'money', 'save', 'saving', 'expense', 'income', 'spending', 
-            'financial', 'finance', 'cost', 'price', 'pay', 'invest', 'investment',
-            'debt', 'credit', 'loan', 'bank', 'account', 'habit', 'track', 'afford',
-            'earn', 'salary', 'wage', 'fee', 'tax', 'rupee', 'dollar', 'currency',
-            'cash', 'fund', 'asset', 'profit', 'loss', 'balance', 'transaction',
-            'payment', 'purchase', 'buying', 'sell', 'economical', 'cheap', 'expensive',
-'wealth', 'rich', 'poor', 'scholarship', 'tuition', 'rent', 'bill'
-        ]
-        
-        message_lower = user_message.lower()
-        is_financial = any(keyword in message_lower for keyword in financial_keywords)
-        
-        # Reject non-financial questions
-        if not is_financial:
-            return jsonify({
-                'response': "I don't have expertise in this topic. I'm specifically designed to help with financial matters like budgeting, saving money, managing expenses, and building good financial habits. Please ask me something related to personal finance!",
-                'is_relevant': False
-            })
-        
-        # Simple financial advice for finance-related questions
-        try:
-            model = genai.GenerativeModel('models/gemini-2.5-flash')
-            prompt = f"""You are a helpful financial advisor for students. 
-Answer this question in 2-3 sentences, focusing on practical financial advice: {user_message}"""
+        with get_db() as conn:
+            # Get expenses
+            expenses = conn.execute('''
+                SELECT amount, category, description, date
+                FROM expenses
+                WHERE user_id = ? AND date >= ?
+                ORDER BY date DESC
+            ''', (user_id, date_filter)).fetchall()
             
-            response = model.generate_content(prompt)
-            ai_response = response.text
+            # Get income
+            income = conn.execute('''
+                SELECT amount, source, date
+                FROM income
+                WHERE user_id = ? AND date >= ?
+                ORDER BY date DESC
+            ''', (user_id, date_filter)).fetchall()
             
-            return jsonify({
-                'response': ai_response,
-                'is_relevant': True
-            })
-            
-        except Exception as e:
-            print(f"Gemini error: {str(e)}")
-            return jsonify({
-                'response': f"Error: {str(e)}",
-                'is_relevant': True
-            })
-            
+            # Get habits
+            habits = conn.execute('''
+                SELECT h.name, COUNT(CASE WHEN hl.completed = 1 THEN 1 END) as completed_days,
+                       COUNT(hl.id) as total_tracked_days
+                FROM habits h
+                LEFT JOIN habit_logs hl ON h.id = hl.habit_id AND hl.date >= ?
+                WHERE h.user_id = ?
+                GROUP BY h.id, h.name
+            ''', (date_filter, user_id)).fetchall()
+        
+        # Calculate statistics
+        total_expenses = sum(e['amount'] for e in expenses)
+        total_income = sum(i['amount'] for i in income)
+        net_balance = total_income - total_expenses
+        
+        # Category breakdown
+        category_spending = {}
+        for exp in expenses:
+            cat = exp['category']
+            category_spending[cat] = category_spending.get(cat, 0) + exp['amount']
+        
+        # Build context for AI
+        context = f"""You are a personal financial advisor chatbot helping a user manage their finances.
+
+USER'S FINANCIAL DATA (Last 3 months):
+
+INCOME:
+- Total Income: ₹{total_income:,.2f}
+- Number of income entries: {len(income)}
+{chr(10).join([f"  - {i['source']}: ₹{i['amount']:,.2f} on {i['date']}" for i in income[:5]])}
+{f"  ... and {len(income) - 5} more entries" if len(income) > 5 else ""}
+
+EXPENSES:
+- Total Expenses: ₹{total_expenses:,.2f}
+- Net Balance: ₹{net_balance:,.2f} {"(Positive - Saving money!)" if net_balance > 0 else "(Negative - Spending more than earning)"}
+- Number of expense entries: {len(expenses)}
+
+SPENDING BY CATEGORY:
+{chr(10).join([f"  - {cat}: ₹{amt:,.2f} ({(amt/total_expenses*100 if total_expenses > 0 else 0):.1f}%)" for cat, amt in sorted(category_spending.items(), key=lambda x: x[1], reverse=True)])}
+
+RECENT EXPENSES:
+{chr(10).join([f"  - {e['category']}: ₹{e['amount']:,.2f} on {e['date']} ({e['description']})" for e in expenses[:10]])}
+{f"  ... and {len(expenses) - 10} more expenses" if len(expenses) > 10 else ""}
+
+HABITS:
+{chr(10).join([f"  - {h['name']}: {h['completed_days']} days completed out of {h['total_tracked_days']} tracked" for h in habits]) if habits else "  No habits tracked yet"}
+
+Current Date: {today.strftime('%Y-%m-%d')}
+
+Based on this data, answer the user's question with specific, personalized advice. Use actual numbers from their data. Be friendly, supportive, and actionable.
+
+User's Question: {user_message}
+
+Your Response:"""
+        
+        # Call Gemini AI
+        model = genai.GenerativeModel('models/gemini-2.5-flash')
+        response = model.generate_content(context)
+        ai_response = response.text
+        
+        return jsonify({
+            'response': ai_response,
+            'is_relevant': True
+        })
+        
     except Exception as e:
-        print(f"Chatbot error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        error_msg = str(e)
+        print(f"Chatbot error: {error_msg}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'response': f"I apologize, but I encountered an error: {error_msg}",
+            'is_relevant': False
+        }), 500
 
 
 # ==================== EXPENSE API ====================

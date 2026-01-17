@@ -436,10 +436,19 @@ function addMessageToChat(message, sender, isRelevant = true) {
 
     const avatar = sender === 'user' ? '👤' : '🤖';
 
+    // Convert markdown to HTML for better formatting
+    let formattedMessage = message
+        // Bold: **text** -> <strong>text</strong>
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        // Italic: *text* -> <em>text</em>
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        // Line breaks
+        .replace(/\n/g, '<br>');
+
     messageDiv.innerHTML = `
         <div class="message-avatar">${avatar}</div>
         <div class="message-content">
-            <p>${message}</p>
+            <p>${formattedMessage}</p>
         </div>
     `;
 
