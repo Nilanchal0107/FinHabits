@@ -961,6 +961,31 @@ a:hover {
     text-align: center;
 }
 
+/* ============================================
+   HIDE BROWSER DEFAULT STYLES (Requested UI Refinement)
+   ============================================ */
+
+/* Hide spin buttons for input type number (Chrome, Safari, Edge, Opera) */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Hide spin buttons for input type number (Firefox) */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* Hide default arrow for select inputs */
+select,
+.form-select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: none !important;
+}
+
 .text-left {
     text-align: left;
 }
