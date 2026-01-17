@@ -166,8 +166,14 @@
                             <input type="hidden" id="expenseId" value="">
                             <div class="form-group">
                                 <label class="form-label">Amount (₹)</label>
-                                <input type="number" id="expenseAmount" class="form-input" step="0.01" min="0" required
-                                    placeholder="100.00">
+                                <div class="amount-input-wrapper">
+                                    <input type="number" id="expenseAmount" class="form-input" step="0.01" min="0"
+                                        required placeholder="100.00" style="flex: 1;">
+                                    <button type="button" class="calc-icon-btn"
+                                        onclick="openCalculator('expenseAmount')" title="Calculator">
+                                        🧮
+                                    </button>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Category</label>
@@ -203,8 +209,14 @@
                             <input type="hidden" id="incomeId" value="">
                             <div class="form-group">
                                 <label class="form-label">Amount (₹)</label>
-                                <input type="number" id="incomeAmount" class="form-input" step="0.01" min="0" required
-                                    placeholder="1000.00">
+                                <div class="amount-input-wrapper">
+                                    <input type="number" id="incomeAmount" class="form-input" step="0.01" min="0"
+                                        required placeholder="1000.00" style="flex: 1;">
+                                    <button type="button" class="calc-icon-btn" onclick="openCalculator('incomeAmount')"
+                                        title="Calculator">
+                                        🧮
+                                    </button>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Source</label>
@@ -571,6 +583,51 @@
         </div>
     </div>
 
+
+    <!-- Calculator Modal -->
+    <div id="calculatorModal" class="modal hidden">
+        <div class="calculator-container">
+            <div class="calculator-header">
+                <h3>Calculator</h3>
+                <button type="button" onclick="closeCalculator()">✕</button>
+            </div>
+            <div class="calculator-display" id="calcDisplay">0</div>
+            <div class="calculator-buttons">
+                <!-- Row 1 -->
+                <button type="button" class="calc-btn clear" onclick="calcClear()">C</button>
+                <button type="button" class="calc-btn backspace" onclick="calcBackspace()">⌫</button>
+                <button type="button" class="calc-btn operation" onclick="calcOperation('÷')">÷</button>
+                <button type="button" class="calc-btn operation" onclick="calcOperation('×')">×</button>
+
+                <!-- Row 2 -->
+                <button type="button" class="calc-btn number" onclick="calcNumber(7)">7</button>
+                <button type="button" class="calc-btn number" onclick="calcNumber(8)">8</button>
+                <button type="button" class="calc-btn number" onclick="calcNumber(9)">9</button>
+                <button type="button" class="calc-btn operation" onclick="calcOperation('-')">-</button>
+
+                <!-- Row 3 -->
+                <button type="button" class="calc-btn number" onclick="calcNumber(4)">4</button>
+                <button type="button" class="calc-btn number" onclick="calcNumber(5)">5</button>
+                <button type="button" class="calc-btn number" onclick="calcNumber(6)">6</button>
+                <button type="button" class="calc-btn operation" onclick="calcOperation('+')">+</button>
+
+                <!-- Row 4 -->
+                <button type="button" class="calc-btn number" onclick="calcNumber(1)">1</button>
+                <button type="button" class="calc-btn number" onclick="calcNumber(2)">2</button>
+                <button type="button" class="calc-btn number" onclick="calcNumber(3)">3</button>
+                <button type="button" class="calc-btn number" onclick="calcDecimal()">.</button>
+
+                <!-- Row 5 -->
+                <button type="button" class="calc-btn number" onclick="calcNumber(0)">0</button>
+                <button type="button" class="calc-btn operation" onclick="calcEquals()"
+                    style="background: var(--gradient-primary);">=</button>
+                <button type="button" class="calc-btn equals" onclick="calcDone()">Done ✓</button>
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}">
+    <script src="{{ url_for('static', filename='js/calculator.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
     <!-- jsPDF for PDF export -->
