@@ -108,7 +108,10 @@ function displayInsights(insights) {
     if (insights.current_stats) {
         setTextContent('totalExpenses', formatCurrency(insights.current_stats.total_expenses));
         setTextContent('totalIncome', formatCurrency(insights.current_stats.total_income));
-        setTextContent('habitsCompleted', insights.current_stats.habits_completed || 0);
+
+        // Calculate net balance
+        const netBalance = insights.current_stats.total_income - insights.current_stats.total_expenses;
+        setTextContent('netBalance', formatCurrency(netBalance));
     }
 
     // 3. Render Category Spending Chart

@@ -697,10 +697,12 @@ async function loadTodayStats() {
 
         const todaySpendingEl = document.getElementById('todaySpending');
         const monthSpendingEl = document.getElementById('monthSpending');
+        const monthIncomeEl = document.getElementById('monthIncome');
         const habitsCompletedEl = document.getElementById('habitsCompleted');
 
         if (todaySpendingEl) todaySpendingEl.textContent = formatCurrency(stats.today_spending);
         if (monthSpendingEl) monthSpendingEl.textContent = formatCurrency(stats.month_spending);
+        if (monthIncomeEl) monthIncomeEl.textContent = formatCurrency(stats.month_income || 0);
         if (habitsCompletedEl) habitsCompletedEl.textContent = stats.habits_completed_today;
     } catch (error) {
         console.error('Error loading stats:', error);

@@ -29,6 +29,10 @@
     --gradient-success: linear-gradient(135deg, #059669 0%, #047857 100%);
     --gradient-warning: linear-gradient(135deg, #d97706 0%, #b45309 100%);
     --gradient-danger: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    --gradient-pink: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+    --gradient-blue: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    --gradient-fire: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    --gradient-aurora: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f97316 100%);
 
     /* Subtle Mesh Background */
     --mesh-bg-1: radial-gradient(at 40% 20%, hsla(220, 40%, 25%, 0.15) 0px, transparent 50%);
@@ -1174,6 +1178,7 @@ a:hover {
         opacity: 0;
         transform: scale(0.9) translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: scale(1) translateY(0);

@@ -661,16 +661,46 @@ def today_stats():
                 WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
             ''', (user_id, str(year), f'{month:02d}')).fetchone()
             
-            # Today's habits completed
-            habits_completed = conn.execute('''
-                SELECT COUNT(*) as count FROM habit_logs 
-                WHERE user_id = ? AND date = ? AND completed = 1
-            ''', (user_id, today)).fetchone()
+            # This month's income
+            month_income = conn.execute('''
+                SELECT SUM(amount) as total FROM income 
+                WHERE user_id = ? AND strftime('%Y', date) = ? AND strftime('%m', date) = ?
+            ''', (user_id, str(year), f'{month:02d}')).fetchone()
+            
+            # Habits completed - count days where ALL habits were completed
+            # Step 1: Get total number of habits for this user
+            total_habits = conn.execute(
+                'SELECT COUNT(*) as count FROM habits WHERE user_id = ?',
+                (user_id,)
+            ).fetchone()
+            
+            total_habits_count = total_habits['count'] or 0
+            
+            # Step 2: Count days in current month where completed habits = total habits
+            # Only count if user has at least one habit
+            habits_completed_days = 0
+            if total_habits_count > 0:
+                habits_completed_days_result = conn.execute('''
+                    SELECT COUNT(DISTINCT date) as days_count
+                    FROM (
+                        SELECT date, COUNT(*) as completed_count
+                        FROM habit_logs
+                        WHERE user_id = ? 
+                        AND completed = 1
+                        AND strftime('%Y', date) = ?
+                        AND strftime('%m', date) = ?
+                        GROUP BY date
+                        HAVING completed_count = ?
+                    )
+                ''', (user_id, str(year), f'{month:02d}', total_habits_count)).fetchone()
+                
+                habits_completed_days = habits_completed_days_result['days_count'] or 0
         
         return jsonify({
             'today_spending': today_expenses['total'] or 0,
             'month_spending': month_expenses['total'] or 0,
-            'habits_completed_today': habits_completed['count'] or 0
+            'month_income': month_income['total'] or 0,
+            'habits_completed_today': habits_completed_days
         })
         
     except Exception as e:

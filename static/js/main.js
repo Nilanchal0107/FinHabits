@@ -8,11 +8,11 @@ async function apiCall(url, method = 'GET', data = null) {
             'Content-Type': 'application/json',
         }
     };
-    
+
     if (data) {
         options.body = JSON.stringify(data);
     }
-    
+
     try {
         const response = await fetch(url, options);
         const result = await response.json();
@@ -34,7 +34,7 @@ function toggleTheme() {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
-    
+
     // Update theme toggle button icon
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
@@ -59,14 +59,14 @@ function animateNumber(element, start, end, duration = 1000) {
     const range = end - start;
     const increment = range / (duration / 16); // 60fps
     let current = start;
-    
+
     const timer = setInterval(() => {
         current += increment;
         if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
             current = end;
             clearInterval(timer);
         }
-        
+
         if (element.id && (element.id.includes('Spending') || element.id.includes('Income') || element.id.includes('Expenses'))) {
             element.textContent = formatCurrency(current);
         } else {
@@ -82,24 +82,24 @@ function showToast(message, type = 'info', duration = 4000) {
     if (existingToast) {
         existingToast.remove();
     }
-    
+
     const toast = document.createElement('div');
     toast.className = 'toast';
-    
+
     const icons = {
         success: '✅',
         error: '❌',
         warning: '⚠️',
         info: '💡'
     };
-    
+
     const colors = {
         success: 'var(--gradient-success)',
         error: 'var(--gradient-fire)',
         warning: 'var(--gradient-warning)',
         info: 'var(--gradient-blue)'
     };
-    
+
     toast.innerHTML = `
         <div style="
             position: fixed;
@@ -122,9 +122,9 @@ function showToast(message, type = 'info', duration = 4000) {
             <div style="flex: 1; color: var(--text-primary); font-weight: 500;">${message}</div>
         </div>
     `;
-    
+
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.style.animation = 'slide-out-right 0.3s ease-out';
         setTimeout(() => toast.remove(), 300);
@@ -140,10 +140,10 @@ function showAlert(message, type = 'info') {
 function validateForm(formId) {
     const form = document.getElementById(formId);
     if (!form) return false;
-    
+
     const inputs = form.querySelectorAll('input[required], select[required]');
     let isValid = true;
-    
+
     inputs.forEach(input => {
         if (!input.value.trim()) {
             isValid = false;
@@ -152,7 +152,7 @@ function validateForm(formId) {
             input.style.borderColor = 'var(--border-color)';
         }
     });
-    
+
     return isValid;
 }
 
@@ -202,7 +202,7 @@ function addAnimations() {
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     addAnimations();
-    
+
     // Set up theme toggle button if it exists
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
@@ -250,3 +250,103 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ==================== MODAL FUNCTIONS (GLOBAL) ====================
+// These are used by sidebar navigation on all pages
+
+// Show user profile modal
+async function showUserProfile() {
+    try {
+        // Load user statistics
+        const stats = await apiCall('/api/stats/all-time');
+
+        // Calculate net savings
+        const totalExpenses = stats.total_expenses || 0;
+        const totalIncome = stats.total_income || 0;
+        const netSavings = totalIncome - totalExpenses;
+
+        // Calculate days active
+        let daysActive = 0;
+        if (stats.account_created) {
+            const createdDate = new Date(stats.account_created);
+            const today = new Date();
+            const diffTime = Math.abs(today - createdDate);
+            daysActive = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // Calculate average daily spending
+        const avgDailySpending = daysActive > 0 ? totalExpenses / daysActive : 0;
+
+        // Get top spending category (requires additional API call)
+        let topCategory = '-';
+        try {
+            const allExpenses = await apiCall('/api/expenses/all');
+            if (allExpenses && allExpenses.length > 0) {
+                // Group expenses by category
+                const categoryTotals = {};
+                allExpenses.forEach(expense => {
+                    const cat = expense.category || 'Others';
+                    categoryTotals[cat] = (categoryTotals[cat] || 0) + expense.amount;
+                });
+
+                // Find category with highest total
+                let maxAmount = 0;
+                let maxCategory = '-';
+                for (const [category, amount] of Object.entries(categoryTotals)) {
+                    if (amount > maxAmount) {
+                        maxAmount = amount;
+                        maxCategory = category;
+                    }
+                }
+
+                // Format category name (capitalize first letter)
+                topCategory = maxCategory.charAt(0).toUpperCase() + maxCategory.slice(1);
+            }
+        } catch (error) {
+            console.error('Error calculating top category:', error);
+        }
+
+        // Update modal with stats
+        document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
+        document.getElementById('totalIncome').textContent = formatCurrency(totalIncome);
+        document.getElementById('netSavings').textContent = formatCurrency(netSavings);
+        document.getElementById('totalHabits').textContent = stats.total_habit_logs || 0;
+        document.getElementById('currentStreak').textContent = `🔥 ${stats.current_streak || 0} days`;
+        document.getElementById('daysActive').textContent = daysActive;
+
+        // Update financial insights
+        document.getElementById('avgDailySpending').textContent = formatCurrency(avgDailySpending);
+        document.getElementById('topCategory').textContent = topCategory;
+
+        // Format account created date
+        if (stats.account_created) {
+            const createdDate = new Date(stats.account_created);
+            document.getElementById('accountCreated').textContent = createdDate.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+
+        // Show modal
+        document.getElementById('userProfileModal').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error loading user stats:', error);
+        showAlert('Failed to load user statistics', 'error');
+    }
+}
+
+// Hide user profile modal
+function hideUserProfile() {
+    document.getElementById('userProfileModal').classList.add('hidden');
+}
+
+// Show about modal
+function showAboutModal() {
+    document.getElementById('aboutModal').classList.remove('hidden');
+}
+
+// Hide about modal
+function hideAboutModal() {
+    document.getElementById('aboutModal').classList.add('hidden');
+}

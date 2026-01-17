@@ -89,6 +89,29 @@ def generate_ai_insights(user_id, year, month):
     category_spending = calculate_spending_by_category(current_data['expenses'])
     prev_category_spending = calculate_spending_by_category(previous_data['expenses'])
     
+    # Calculate habit regularity (instead of showing counts)
+    import calendar
+    days_in_month = calendar.monthrange(year, month)[1]
+    
+    habit_patterns = []
+    for habit in current_data['habits']:
+        completed_days = habit['completed_days']
+        completion_rate = (completed_days / days_in_month) * 100 if days_in_month > 0 else 0
+        
+        # Classify regularity
+        if completion_rate >= 70:
+            status = "Regular (tracked consistently)"
+        elif completion_rate >= 40:
+            status = "Moderate (tracked some days)"
+        elif completion_rate > 0:
+            status = "Irregular (tracked sporadically)"
+        else:
+            status = "Not tracked"
+        
+        habit_patterns.append(f"- {habit['name']}: {status}")
+    
+    habits_summary = chr(10).join(habit_patterns) if habit_patterns else "- No habits tracked this month"
+    
     # Create prompt for Gemini
     prompt = f"""You are a friendly financial advisor helping a student understand their spending habits.
 
@@ -100,8 +123,8 @@ Current Month ({year}-{month:02d}):
 Category Breakdown:
 {chr(10).join([f'- {cat}: ₹{amt:.2f}' for cat, amt in category_spending.items()])}
 
-Habits Tracked:
-{chr(10).join([f'- {h["name"]}: {h["completed_days"]} days completed' for h in current_data['habits']])}
+Habit Tracking Pattern:
+{habits_summary}
 
 Previous Month ({prev_year}-{prev_month:02d}):
 - Total Income: ₹{prev_total_income:.2f}
@@ -111,6 +134,8 @@ Please provide:
 1. A brief, encouraging summary of their financial situation (2-3 sentences)
 2. A comparison with the previous month (1-2 sentences)
 3. Three specific, actionable suggestions to improve spending or habits
+
+IMPORTANT: When discussing habits, comment on their regularity/consistency patterns (e.g., "You're maintaining consistent habits" or "Try to establish a more regular routine"), but do NOT mention specific numbers or day counts for habits.
 
 Keep your tone friendly, supportive, and student-focused. Don't make predictions about future spending or provide financial guarantees. Focus on practical advice based on the data shown.
 """
