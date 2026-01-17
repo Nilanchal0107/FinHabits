@@ -986,6 +986,17 @@ select,
     background-image: none !important;
 }
 
+/* Force select dropdowns to always pop down (not up) */
+select {
+    /* Prevent upward expansion by ensuring consistent rendering */
+    vertical-align: bottom;
+}
+
+/* For browsers that support it, force dropdown direction */
+select:focus {
+    position: relative;
+}
+
 .text-left {
     text-align: left;
 }
